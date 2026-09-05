@@ -249,7 +249,47 @@
               <span class="status-dot"></span>
               <span id="agentStatusText">Idle</span>
             </div>
-            <div id="agentStepPill" class="agent-step-pill">0 / 20</div>
+          </div>
+        </div>
+
+        <!-- Real-Time Metrics Dashboard -->
+        <div class="agent-metrics-bar glass">
+          <div class="metric-item">
+            <span class="metric-label">Elapsed</span>
+            <span id="agentTimer" class="metric-value">00:00</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-label">Step</span>
+            <span id="agentStepCounter" class="metric-value">0 / 25</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-label">Est. Tokens</span>
+            <span id="agentTokenCounter" class="metric-value">~0</span>
+          </div>
+        </div>
+
+        <!-- Real-Time ReAct Phase Timeline -->
+        <div class="agent-phase-timeline glass" id="agentPhaseTimeline">
+          <div class="phase-node" id="phaseNodePerceive" data-phase="perceiving">
+            <span class="phase-dot"></span>
+            <span class="phase-text">Perceive</span>
+          </div>
+          <div class="phase-connector"></div>
+          <div class="phase-node" id="phaseNodeThink" data-phase="thinking">
+            <span class="phase-dot"></span>
+            <span class="phase-text">Think</span>
+          </div>
+          <div class="phase-connector"></div>
+          <div class="phase-node" id="phaseNodeAct" data-phase="acting">
+            <span class="phase-dot"></span>
+            <span class="phase-text">Act</span>
+          </div>
+          <div class="phase-connector"></div>
+          <div class="phase-node" id="phaseNodeVerify" data-phase="verifying">
+            <span class="phase-dot"></span>
+            <span class="phase-text">Verify</span>
           </div>
         </div>
 
@@ -280,7 +320,7 @@
             </button>
             <button class="agent-btn btn-danger" id="agentStopBtn" style="display: none;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-              <span>Stop</span>
+              <span>Stop (Esc)</span>
             </button>
           </div>
         </div>
@@ -289,7 +329,11 @@
         <div class="agent-feed-wrapper">
           <div class="feed-header-bar">
             <span class="feed-title">Activity Feed</span>
-            <button class="feed-clear-btn" id="agentClearFeedBtn">Clear</button>
+            <div class="feed-header-actions" style="display: flex; gap: 6px; align-items: center;">
+              <button class="feed-action-btn" id="agentExportLogsBtn" title="Export Execution Logs (JSON)">📥 Logs</button>
+              <button class="feed-action-btn" id="agentExportDataBtn" title="Export Extracted Data (CSV/JSON)">📊 Data</button>
+              <button class="feed-clear-btn" id="agentClearFeedBtn">Clear</button>
+            </div>
           </div>
           <div class="agent-activity-feed" id="agentActivityFeed">
             <div class="agent-feed-empty" id="agentFeedEmpty">

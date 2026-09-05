@@ -8,13 +8,15 @@
   },
   "permissions": [
     "activeTab",
+    "alarms",
     "debugger",
     "downloads",
     "scripting",
     "sidePanel",
     "storage",
     "tabGroups",
-    "tabs"
+    "tabs",
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"

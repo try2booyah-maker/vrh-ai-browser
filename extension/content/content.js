@@ -1,8 +1,12 @@
-// VRH.AI content.js — Set-of-Marks (SoM) Visual Perception & Interactive DOM Engine
-console.log("VRH.AI Set-of-Marks visual perception engine loaded.");
+/**
+ * VRH.AI content.js — Perception Engine 2.0 (Deep DOM, Shadow Roots, Hit-Testing & Annoyance Sweeper)
+ * Provides vision-grounded element coordinates, deep shadow root crawling, and occlusion detection.
+ */
+
+console.log("[VRH.AI] Perception Engine 2.0 loaded.");
 
 // ══════════════════════════════════════════════════
-// SET-OF-MARKS (SoM) REGISTRY & STATE
+// REGISTRY & STATE
 // ══════════════════════════════════════════════════
 const somRegistry = new Map();
 let somOverlayContainer = null;
@@ -10,16 +14,59 @@ let somOverlayContainer = null;
 const SENSITIVE_KEYWORDS = [
   'checkout', 'buy now', 'place order', 'complete purchase', 'pay now', 'confirm order',
   'submit payment', 'order now', 'transfer money', 'wire transfer', 'delete account',
-  'delete permanently', 'remove account', 'purge data', 'confirm purchase', 'pay with'
+  'delete permanently', 'remove account', 'purge data', 'confirm purchase', 'pay with',
+  'confirm payment', 'authorize payment', 'purchase now'
 ];
 
+const ANNOYANCE_SELECTORS = [
+  '#onetrust-accept-btn-handler',
+  '#accept-recommended-btn-handler',
+  'button[id*="cookie-accept" i]',
+  'button[id*="accept-cookie" i]',
+  'button[class*="cookie-accept" i]',
+  'button[class*="accept-cookie" i]',
+  'button[aria-label*="accept all" i]',
+  'button[aria-label*="accept cookies" i]',
+  'button[aria-label*="agree" i]',
+  '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
+  '.cc-btn.cc-allow',
+  '.cc-allow',
+  '#cookie-notice-accept',
+  'button[data-testid*="cookie-policy-manage-dialog-accept-button" i]',
+  'button[id*="didomi-notice-agree-button" i]'
+];
+
+// ══════════════════════════════════════════════════
+// AUTOMATED ANNOYANCE & COOKIE SWEEPER
+// ══════════════════════════════════════════════════
+function sweepAnnoyances() {
+  let dismissedCount = 0;
+  for (const selector of ANNOYANCE_SELECTORS) {
+    try {
+      const btn = document.querySelector(selector);
+      if (btn && btn.offsetParent !== null && typeof btn.click === 'function') {
+        btn.click();
+        dismissedCount++;
+        console.log(`[VRH.AI] Swept annoyance banner via selector: ${selector}`);
+      }
+    } catch (e) {
+      // Non-fatal if selector fails
+    }
+  }
+  return dismissedCount;
+}
+
+// ══════════════════════════════════════════════════
+// SENSITIVITY & CAPTCHA DETECTION
+// ══════════════════════════════════════════════════
 function isElementSensitive(el, text) {
   const combined = (
     (text || '') + ' ' +
     (el.getAttribute('aria-label') || '') + ' ' +
     (el.getAttribute('title') || '') + ' ' +
     (el.name || '') + ' ' +
-    (el.id || '')
+    (el.id || '') + ' ' +
+    (el.className || '')
   ).toLowerCase();
   return SENSITIVE_KEYWORDS.some(kw => combined.includes(kw));
 }
@@ -29,6 +76,8 @@ function detectCaptchaOr2FA() {
     'iframe[src*="recaptcha"]',
     'iframe[src*="turnstile"]',
     'iframe[src*="hcaptcha"]',
+    'iframe[src*="arkoselabs"]',
+    'iframe[src*="funcaptcha"]',
     '.g-recaptcha',
     '.cf-turnstile',
     '#cf-turnstile',
@@ -41,31 +90,86 @@ function detectCaptchaOr2FA() {
   for (const sel of captchaSelectors) {
     try {
       const found = document.querySelector(sel);
-      if (found && found.getBoundingClientRect().width > 0) return true;
+      if (found) {
+        const rect = found.getBoundingClientRect();
+        if (rect.width > 10 && rect.height > 10) return true;
+      }
     } catch (e) { /* ignore selector syntax edge cases */ }
   }
   return false;
 }
 
+// ══════════════════════════════════════════════════
+// DEEP DOM & OPEN SHADOW ROOT CRAWLER
+// ══════════════════════════════════════════════════
 function isElementActionable(el) {
+  if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+
   const tag = el.tagName.toLowerCase();
   if (['a', 'button', 'select', 'textarea'].includes(tag)) return true;
   if (tag === 'input' && el.type !== 'hidden') return true;
-  if (tag === 'summary') return true;
+  if (tag === 'summary' || tag === 'details') return true;
   if (el.isContentEditable) return true;
 
   const role = el.getAttribute('role');
-  if (role && ['button', 'link', 'checkbox', 'tab', 'menuitem', 'switch', 'combobox', 'searchbox', 'radio', 'option'].includes(role.toLowerCase())) {
+  if (role && [
+    'button', 'link', 'checkbox', 'tab', 'menuitem', 'switch',
+    'combobox', 'searchbox', 'radio', 'option', 'treeitem', 'slider'
+  ].includes(role.toLowerCase())) {
     return true;
   }
 
-  if (el.hasAttribute('onclick') || el.getAttribute('tabindex') >= 0) return true;
+  if (el.hasAttribute('onclick') || (el.hasAttribute('tabindex') && el.getAttribute('tabindex') >= 0)) {
+    return true;
+  }
+
+  // Cursor pointer heuristics
+  try {
+    const style = window.getComputedStyle(el);
+    if (style.cursor === 'pointer') return true;
+  } catch (e) {}
+
   return false;
 }
 
+/**
+ * Recursively traverses light DOM and all open Shadow Roots.
+ * Also discovers accessible iframe windows where possible.
+ */
+function crawlInteractiveNodes(root = document.body, nodes = []) {
+  if (!root) return nodes;
+
+  const children = root.children || root.childNodes;
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i];
+    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+    const tag = node.tagName.toLowerCase();
+    if (['script', 'style', 'noscript', 'svg', 'path'].includes(tag)) continue;
+
+    // Check if current node is actionable
+    if (isElementActionable(node)) {
+      nodes.push(node);
+    }
+
+    // Traverse open shadow root if present (e.g. Web Components)
+    if (node.shadowRoot) {
+      crawlInteractiveNodes(node.shadowRoot, nodes);
+    }
+
+    // Traverse child nodes
+    crawlInteractiveNodes(node, nodes);
+  }
+
+  return nodes;
+}
+
+// ══════════════════════════════════════════════════
+// VIEWPORT HIT-TESTING & OCCLUSION DETECTION
+// ══════════════════════════════════════════════════
 function isElementVisibleInViewport(el) {
   const rect = el.getBoundingClientRect();
-  if (rect.width < 6 || rect.height < 6) return false;
+  if (rect.width < 4 || rect.height < 4) return false;
   if (rect.bottom <= 0 || rect.top >= window.innerHeight || rect.right <= 0 || rect.left >= window.innerWidth) {
     return false;
   }
@@ -80,16 +184,72 @@ function isElementVisibleInViewport(el) {
   return true;
 }
 
-function getCleanElementText(el) {
-  let text = el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('title') || el.innerText || el.value || el.getAttribute('alt') || '';
-  text = text.replace(/\s+/g, ' ').trim();
-  return text.substring(0, 80);
+/**
+ * Test if the element is occluded by sticky headers, modal backdrops, or floating popups.
+ */
+function isElementOccluded(el, rect) {
+  const points = [
+    { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+    { x: rect.left + Math.min(6, rect.width / 4), y: rect.top + Math.min(6, rect.height / 4) },
+    { x: rect.right - Math.min(6, rect.width / 4), y: rect.bottom - Math.min(6, rect.height / 4) }
+  ];
+
+  for (const pt of points) {
+    if (pt.x <= 0 || pt.x >= window.innerWidth || pt.y <= 0 || pt.y >= window.innerHeight) continue;
+
+    let hit = document.elementFromPoint(pt.x, pt.y);
+
+    // If point lands inside a shadow host, pierce it
+    while (hit && hit.shadowRoot && typeof hit.shadowRoot.elementFromPoint === 'function') {
+      const shadowHit = hit.shadowRoot.elementFromPoint(pt.x, pt.y);
+      if (!shadowHit || shadowHit === hit) break;
+      hit = shadowHit;
+    }
+
+    if (!hit) continue;
+
+    // Direct match or parent-child hierarchy match
+    if (hit === el || el.contains(hit) || hit.contains(el)) {
+      return false; // Not occluded
+    }
+  }
+
+  // If none of the sample points reached the element, it is occluded
+  return true;
 }
 
 // ══════════════════════════════════════════════════
-// SET-OF-MARKS (SoM) INJECTION & CLEANUP
+// TOKEN-EFFICIENT ELEMENT SERIALIZATION
 // ══════════════════════════════════════════════════
+function getCleanElementText(el) {
+  let text = el.getAttribute('aria-label') ||
+             el.getAttribute('placeholder') ||
+             el.getAttribute('title') ||
+             el.innerText ||
+             el.value ||
+             el.getAttribute('alt') || '';
+  text = text.replace(/\s+/g, ' ').trim();
+  return text.substring(0, 70);
+}
 
+function getElementState(el) {
+  const state = {};
+  if (el.disabled) state.disabled = true;
+  if (el.checked !== undefined && (el.type === 'checkbox' || el.type === 'radio')) {
+    state.checked = el.checked;
+  }
+  if (el.getAttribute('aria-expanded')) {
+    state.expanded = el.getAttribute('aria-expanded') === 'true';
+  }
+  if (el.getAttribute('aria-selected')) {
+    state.selected = el.getAttribute('aria-selected') === 'true';
+  }
+  return Object.keys(state).length > 0 ? state : undefined;
+}
+
+// ══════════════════════════════════════════════════
+// PERCEPTION ENGINE 2.0 CRAWLER & REGISTRATION
+// ══════════════════════════════════════════════════
 function clearSetOfMarks() {
   const existing = document.getElementById('vrh-som-overlay');
   if (existing) existing.remove();
@@ -100,40 +260,54 @@ function injectSetOfMarks() {
   clearSetOfMarks();
   somRegistry.clear();
 
-  // Find candidates
-  const allElements = document.querySelectorAll('a, button, input, select, textarea, summary, [role], [onclick], [tabindex], [contenteditable]');
-  const candidates = [];
+  // 1. Auto-sweep nuisance banners first
+  sweepAnnoyances();
 
-  allElements.forEach(el => {
-    if (isElementActionable(el) && isElementVisibleInViewport(el)) {
-      candidates.push(el);
+  // 2. Recursive DOM & Open Shadow Root crawl
+  const rawCandidates = crawlInteractiveNodes(document.body, []);
+
+  // 3. Deduplicate
+  const uniqueCandidates = Array.from(new Set(rawCandidates));
+
+  // 4. Filter by viewport visibility & occlusion hit-testing
+  const visibleCandidates = [];
+  for (const el of uniqueCandidates) {
+    if (isElementVisibleInViewport(el)) {
+      const rect = el.getBoundingClientRect();
+      if (!isElementOccluded(el, rect)) {
+        visibleCandidates.push({ el, rect });
+      }
     }
-  });
+  }
 
-  // Filter out redundant nested actionable elements (e.g. <a> containing <button>)
-  const filtered = candidates.filter(el => {
-    const parent = el.parentElement;
-    if (!parent) return true;
-    return !candidates.some(c => c !== el && c.contains(el) && (c.tagName === 'A' || c.tagName === 'BUTTON'));
-  }).slice(0, 80); // Cap at 80 for token efficiency & visual clarity
+  // 5. Filter out redundant nested actionable elements (e.g. <a> containing a <button>)
+  const filtered = visibleCandidates.filter(({ el }) => {
+    return !visibleCandidates.some(({ el: other }) => {
+      if (other === el) return false;
+      const otherTag = other.tagName.toLowerCase();
+      return (otherTag === 'a' || otherTag === 'button') && other.contains(el);
+    });
+  }).slice(0, 85); // Cap at 85 for token efficiency & fast multimodal comprehension
 
   const manifest = [];
   let markId = 1;
 
-  filtered.forEach(el => {
-    const rect = el.getBoundingClientRect();
+  for (const { el, rect } of filtered) {
     const centerX = Math.round(rect.left + rect.width / 2);
     const centerY = Math.round(rect.top + rect.height / 2);
     const text = getCleanElementText(el);
     const sensitive = isElementSensitive(el, text);
+    const state = getElementState(el);
 
     const markData = {
       mark_id: markId,
       element: el,
       tag: el.tagName.toLowerCase(),
-      type: el.type || null,
+      type: el.type || undefined,
       role: el.getAttribute('role') || el.tagName.toLowerCase(),
-      text: text,
+      name: text || undefined,
+      placeholder: el.getAttribute('placeholder') || undefined,
+      state: state,
       center: [centerX, centerY],
       rect: {
         left: Math.round(rect.left),
@@ -146,18 +320,21 @@ function injectSetOfMarks() {
 
     somRegistry.set(markId, markData);
 
+    // Compact representation for LLM prompt
     manifest.push({
       mark_id: markId,
+      role: markData.role,
+      name: markData.name,
       tag: markData.tag,
       type: markData.type,
-      role: markData.role,
-      text: markData.text,
+      placeholder: markData.placeholder,
+      state: markData.state,
       center: markData.center,
       rect: markData.rect
     });
 
     markId++;
-  });
+  }
 
   const hasCaptcha = detectCaptchaOr2FA();
 
@@ -178,8 +355,8 @@ function getMarkCoordinates(markId) {
   const data = somRegistry.get(idNum);
   if (!data) return null;
 
-  // Re-verify coordinates against current DOM state
-  if (document.body.contains(data.element)) {
+  // Re-verify coordinates against current DOM position
+  if (data.element && (document.body.contains(data.element) || (data.element.getRootNode() && data.element.getRootNode() !== document))) {
     const rect = data.element.getBoundingClientRect();
     return {
       mark_id: idNum,
@@ -187,23 +364,23 @@ function getMarkCoordinates(markId) {
       y: Math.round(rect.top + rect.height / 2),
       text: getCleanElementText(data.element),
       tag: data.tag,
-      isSensitive: isElementSensitive(data.element, data.text)
+      isSensitive: isElementSensitive(data.element, data.name)
     };
   }
 
-  // Fallback to cached center
+  // Fallback to cached coordinates
   return {
     mark_id: idNum,
     x: data.center[0],
     y: data.center[1],
-    text: data.text,
+    text: data.name || '',
     tag: data.tag,
     isSensitive: data.isSensitive
   };
 }
 
 // ══════════════════════════════════════════════════
-// BACKWARD-COMPATIBLE TEXT EXTRACTION
+// BACKWARD-COMPATIBLE TEXT & DOM EXTRACTION
 // ══════════════════════════════════════════════════
 function getDeepText(node, maxLen = 30000) {
   let text = "";
@@ -229,6 +406,16 @@ function getDeepText(node, maxLen = 30000) {
 }
 
 // ══════════════════════════════════════════════════
+// EMERGENCY ESCAPE HOTKEY LISTENER
+// ══════════════════════════════════════════════════
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    // Notify extension background to stop running agent immediately
+    chrome.runtime.sendMessage({ action: "AGENT_EMERGENCY_STOP" }).catch(() => {});
+  }
+}, true);
+
+// ══════════════════════════════════════════════════
 // RUNTIME MESSAGE DISPATCHER
 // ══════════════════════════════════════════════════
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -248,6 +435,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ error: err.toString() });
     }
   }
+  else if (message.action === "SWEEP_ANNOYANCES") {
+    try {
+      const count = sweepAnnoyances();
+      sendResponse({ result: { swept: count } });
+    } catch (err) {
+      sendResponse({ error: err.toString() });
+    }
+  }
   else if (message.action === "GET_MARK_INFO") {
     try {
       const markInfo = getMarkCoordinates(message.markId);
@@ -260,14 +455,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const text = getDeepText(document.body, 30000);
     sendResponse({ result: text || "No readable text found on page." });
   }
+  else if (message.action === "EXTRACT_STRUCTURED_DATA") {
+    try {
+      const schema = message.schema || {};
+      const rows = [];
+      const tables = document.querySelectorAll('table');
+      if (tables.length > 0) {
+        tables.forEach(tbl => {
+          const headers = Array.from(tbl.querySelectorAll('th')).map(th => th.innerText.trim());
+          const trs = tbl.querySelectorAll('tbody tr, tr');
+          trs.forEach(tr => {
+            const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+            if (cells.length > 0) {
+              const rowObj = {};
+              cells.forEach((cell, idx) => {
+                const key = headers[idx] || `col_${idx + 1}`;
+                rowObj[key] = cell;
+              });
+              rows.push(rowObj);
+            }
+          });
+        });
+      }
+      sendResponse({ result: { data: rows, count: rows.length } });
+    } catch (err) {
+      sendResponse({ error: err.toString() });
+    }
+  }
   else if (message.action === "GET_INTERACTABLE_DOM") {
-    // Backward compatibility for existing agent mode
     try {
       const som = injectSetOfMarks();
       const domMap = som.manifest.map(m => ({
         id: m.mark_id.toString(),
         tag: m.tag,
-        text: m.text,
+        text: m.name || m.placeholder || '',
         type: m.type
       }));
       sendResponse({ result: domMap });
@@ -276,7 +497,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
   else if (message.action === "CLICK_ELEMENT") {
-    // DOM-level click fallback
     try {
       const mark = somRegistry.get(parseInt(message.targetId, 10));
       const el = mark ? mark.element : document.querySelector(`[data-vrh-id="${message.targetId}"]`);

@@ -2025,9 +2025,16 @@ const initSidepanelApp = async () => {
     const agentStatusPill = document.getElementById('agentStatusPill');
     const agentStatusText = document.getElementById('agentStatusText');
     const agentStepPill = document.getElementById('agentStepPill');
+    const agentTimer = document.getElementById('agentTimer');
+    const agentStepCounter = document.getElementById('agentStepCounter');
+    const agentTokenCounter = document.getElementById('agentTokenCounter');
+    const agentPhaseTimeline = document.getElementById('agentPhaseTimeline');
+    const agentPhaseNodes = document.querySelectorAll('.phase-node');
     const agentActivityFeed = document.getElementById('agentActivityFeed');
     const agentFeedEmpty = document.getElementById('agentFeedEmpty');
     const clearAgentFeedBtn = document.getElementById('clearAgentFeedBtn') || document.getElementById('agentClearFeedBtn');
+    const agentExportLogsBtn = document.getElementById('agentExportLogsBtn');
+    const agentExportDataBtn = document.getElementById('agentExportDataBtn');
     const agentInterventionModal = document.getElementById('agentInterventionModal');
     const agentInterventionMsg = document.getElementById('agentInterventionMsg');
     const agentInterventionResumeBtn = document.getElementById('agentInterventionResumeBtn');
@@ -2045,6 +2052,19 @@ const initSidepanelApp = async () => {
       });
     });
 
+    function formatTimer(totalSecs) {
+      const m = Math.floor(totalSecs / 60).toString().padStart(2, '0');
+      const s = (totalSecs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updatePhaseTimeline(phase) {
+      if (!agentPhaseNodes) return;
+      agentPhaseNodes.forEach(node => {
+        node.classList.toggle('active', node.dataset.phase === phase);
+      });
+    }
+
     // Helper: Update Status Pill UI
     function setAgentStatus(phase, textOverride) {
       if (!agentStatusPill) return;
@@ -2055,6 +2075,7 @@ const initSidepanelApp = async () => {
         perceiving: { cls: 'status-perceiving', text: 'Perceiving' },
         thinking: { cls: 'status-thinking', text: 'Thinking' },
         acting: { cls: 'status-acting', text: 'Acting' },
+        verifying: { cls: 'status-verifying', text: 'Verifying' },
         paused: { cls: 'status-paused', text: 'Paused' },
         done: { cls: 'status-done', text: 'Done' },
         error: { cls: 'status-error', text: 'Error' },
@@ -2064,6 +2085,7 @@ const initSidepanelApp = async () => {
       const info = phaseMap[phase] || { cls: 'status-idle', text: phase };
       agentStatusPill.classList.add(info.cls);
       if (agentStatusText) agentStatusText.textContent = textOverride || info.text;
+      updatePhaseTimeline(phase);
     }
 
     // Helper: Update Button States
@@ -2189,7 +2211,10 @@ const initSidepanelApp = async () => {
 
       updateControls('running');
       setAgentStatus('thinking', 'Starting...');
-      if (agentStepPill) agentStepPill.textContent = '1 / 20';
+      if (agentStepPill) agentStepPill.textContent = '1 / 25';
+      if (agentStepCounter) agentStepCounter.textContent = '1 / 25';
+      if (agentTimer) agentTimer.textContent = '00:00';
+      if (agentTokenCounter) agentTokenCounter.textContent = '~0';
 
       chrome.runtime.sendMessage({
         action: "AGENT_START",
@@ -2225,6 +2250,7 @@ const initSidepanelApp = async () => {
       chrome.runtime.sendMessage({ action: "AGENT_STOP" }, () => {
         updateControls('idle');
         setAgentStatus('idle', 'Stopped');
+        updatePhaseTimeline('idle');
         if (agentInterventionModal) agentInterventionModal.style.display = 'none';
       });
     });
@@ -2239,6 +2265,84 @@ const initSidepanelApp = async () => {
         }
       });
     }
+
+    // Export Logs Button (JSON)
+    if (agentExportLogsBtn) {
+      agentExportLogsBtn.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: "GET_AGENT_LOGS" }, (res) => {
+          const logs = res?.logs || [];
+          if (logs.length === 0) {
+            showToast("No execution logs recorded yet.");
+            return;
+          }
+          const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `vrh_agent_logs_${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast("✅ Exported execution logs!");
+        });
+      });
+    }
+
+    // Export Data Button (CSV/JSON)
+    if (agentExportDataBtn) {
+      agentExportDataBtn.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: "GET_EXTRACTED_DATA" }, (res) => {
+          const data = res?.data || [];
+          if (data.length === 0) {
+            showToast("No structured data extracted yet.");
+            return;
+          }
+
+          let content = '';
+          let mime = 'application/json';
+          let filename = `vrh_agent_data_${Date.now()}.json`;
+
+          if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+            try {
+              const headers = Object.keys(data[0]);
+              const csvRows = [headers.join(',')];
+              for (const row of data) {
+                const values = headers.map(h => {
+                  const val = (row[h] !== undefined && row[h] !== null) ? String(row[h]).replace(/"/g, '""') : '';
+                  return `"${val}"`;
+                });
+                csvRows.push(values.join(','));
+              }
+              content = csvRows.join('\n');
+              mime = 'text/csv';
+              filename = `vrh_agent_data_${Date.now()}.csv`;
+            } catch (e) {
+              content = JSON.stringify(data, null, 2);
+            }
+          } else {
+            content = JSON.stringify(data, null, 2);
+          }
+
+          const blob = new Blob([content], { type: mime });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast("✅ Exported extracted data!");
+        });
+      });
+    }
+
+    // Emergency Escape Hotkey Listener inside sidepanel
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (agentStopBtn && agentStopBtn.style.display !== 'none') {
+          agentStopBtn.click();
+          showToast("🛑 Task halted via Escape key.");
+        }
+      }
+    });
 
     // Intervention Modal Actions
     if (agentInterventionResumeBtn) {
@@ -2266,8 +2370,17 @@ const initSidepanelApp = async () => {
       if (msg.type === 'AGENT_STATUS_UPDATE' && msg.payload) {
         const p = msg.payload;
 
-        if (p.step && p.maxSteps && agentStepPill) {
-          agentStepPill.textContent = `${p.step} / ${p.maxSteps}`;
+        if (p.step && p.maxSteps) {
+          if (agentStepPill) agentStepPill.textContent = `${p.step} / ${p.maxSteps}`;
+          if (agentStepCounter) agentStepCounter.textContent = `${p.step} / ${p.maxSteps}`;
+        }
+
+        if (p.elapsedSeconds !== undefined && agentTimer) {
+          agentTimer.textContent = formatTimer(p.elapsedSeconds);
+        }
+
+        if (p.tokensEstimated !== undefined && agentTokenCounter) {
+          agentTokenCounter.textContent = `~${p.tokensEstimated >= 1000 ? (p.tokensEstimated / 1000).toFixed(1) + 'k' : p.tokensEstimated}`;
         }
 
         if (p.phase) {
@@ -2284,6 +2397,7 @@ const initSidepanelApp = async () => {
           }
         } else if (p.status === 'done' || p.status === 'error' || p.status === 'aborted') {
           updateControls('idle');
+          updatePhaseTimeline('idle');
           if (agentInterventionModal) agentInterventionModal.style.display = 'none';
         }
 
@@ -2306,8 +2420,15 @@ const initSidepanelApp = async () => {
         if (s.status === 'running' || s.status === 'paused') {
           updateControls(s.status);
           setAgentStatus(s.status);
-          if (s.currentStep && s.maxSteps && agentStepPill) {
-            agentStepPill.textContent = `${s.currentStep} / ${s.maxSteps}`;
+          if (s.currentStep && s.maxSteps) {
+            if (agentStepPill) agentStepPill.textContent = `${s.currentStep} / ${s.maxSteps}`;
+            if (agentStepCounter) agentStepCounter.textContent = `${s.currentStep} / ${s.maxSteps}`;
+          }
+          if (s.elapsedSeconds !== undefined && agentTimer) {
+            agentTimer.textContent = formatTimer(s.elapsedSeconds);
+          }
+          if (s.tokensEstimated !== undefined && agentTokenCounter) {
+            agentTokenCounter.textContent = `~${s.tokensEstimated >= 1000 ? (s.tokensEstimated / 1000).toFixed(1) + 'k' : s.tokensEstimated}`;
           }
           if (s.taskGoal && agentGoalInput && !agentGoalInput.value) {
             agentGoalInput.value = s.taskGoal;

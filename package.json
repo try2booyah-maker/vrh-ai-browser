@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +15,12 @@
   "type": "commonjs",
   "dependencies": {
     "puppeteer": "^25.3.0"
+  },
+  "devDependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "dompurify": "^3.4.14",
+    "jsdom": "^29.1.1",
+    "pdfjs-dist": "^3.11.174",
+    "tesseract.js": "^7.0.0"
   }
 }

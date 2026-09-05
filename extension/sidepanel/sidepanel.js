@@ -215,12 +215,14 @@ const initSidepanelApp = async () => {
   // STATE
   // ══════════════════════════════════════════════════
   let selectedTabId = null;
+  const selectedTabIds = new Set();
   let isTabSharingEnabled = true;
   let dismissedTabId = null;
   let messageHistory = [];
   let currentChatId = Date.now().toString();
   let savedChats = {};
-  const attachedFiles = []; // Statically disabled
+  const attachedFiles = [];
+  let currentAttachedImage = null; // { url: string (data URI), name: string }
 
   const result = await chrome.storage.local.get(['savedChats', 'defaultMode', 'autoShareEnabled']);
   savedChats = result.savedChats || {};
@@ -381,70 +383,137 @@ const initSidepanelApp = async () => {
   // ══════════════════════════════════════════════════
   // CONTEXT PILL & TABS MENU
   // ══════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════
+  // CONTEXT PILL & MULTI-TAB MENU
+  // ══════════════════════════════════════════════════
+  const tabCountBadge = document.getElementById('tabCountBadge');
+  const tabsSelectAllBtn = document.getElementById('tabsSelectAllBtn');
+
   async function updateContextPill() {
     try {
       if (!isTabSharingEnabled) {
         contextPill.style.display = 'none';
+        if (tabCountBadge) tabCountBadge.style.display = 'none';
         return;
       }
 
-      let currentTabId = null;
-      if (selectedTabId) {
-        currentTabId = selectedTabId;
-      } else {
+      if (selectedTabIds.size === 0) {
+        if (tabCountBadge) tabCountBadge.style.display = 'none';
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab) currentTabId = tab.id;
-      }
-
-      if (currentTabId !== null && currentTabId === dismissedTabId) {
-        contextPill.style.display = 'none';
+        if (tab && tab.id !== dismissedTabId) {
+          contextText.textContent = `Sharing '${tab.title}'`;
+          contextPill.style.display = 'flex';
+        } else {
+          contextPill.style.display = 'none';
+        }
         return;
       }
 
-      if (selectedTabId) {
-        const tab = await chrome.tabs.get(selectedTabId).catch(() => null);
-        if (tab) { contextText.textContent = `Sharing '${tab.title}'`; contextPill.style.display = 'flex'; return; }
-        selectedTabId = null;
+      if (selectedTabIds.size === 1) {
+        const singleId = Array.from(selectedTabIds)[0];
+        const tab = await chrome.tabs.get(singleId).catch(() => null);
+        if (tab) {
+          contextText.textContent = `Sharing '${tab.title}'`;
+          contextPill.style.display = 'flex';
+          if (tabCountBadge) tabCountBadge.style.display = 'none';
+        } else {
+          selectedTabIds.delete(singleId);
+          updateContextPill();
+        }
+        return;
       }
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab) { contextText.textContent = `Sharing '${tab.title}'`; contextPill.style.display = 'flex'; }
-      else contextPill.style.display = 'none';
-    } catch(e) { contextPill.style.display = 'none'; }
+
+      // 2 or more tabs selected
+      if (tabCountBadge) {
+        tabCountBadge.textContent = selectedTabIds.size;
+        tabCountBadge.style.display = 'inline-block';
+      }
+      contextText.innerHTML = `<strong>${selectedTabIds.size} tabs selected</strong>`;
+      contextPill.style.display = 'flex';
+    } catch(e) {
+      contextPill.style.display = 'none';
+    }
   }
 
-  chrome.tabs.onActivated.addListener((activeInfo) => {
-    if (activeInfo.tabId !== dismissedTabId) {
-      dismissedTabId = null;
-      isTabSharingEnabled = true;
-    }
-    if (!selectedTabId && isTabSharingEnabled) updateContextPill();
-  });
-
-  chrome.tabs.onUpdated.addListener((id, _, tab) => {
-    if (tab.active && id !== dismissedTabId) {
-      dismissedTabId = null;
-      isTabSharingEnabled = true;
-    }
-    if (((!selectedTabId && tab.active) || selectedTabId === id) && isTabSharingEnabled) updateContextPill();
-  });
-  updateContextPill();
-
-  tabsMenuBtn.addEventListener('click', async () => {
-    if (tabsPanel.style.display === 'flex') { tabsPanel.style.display = 'none'; return; }
+  async function renderTabsList() {
     const tabs = await chrome.tabs.query({ currentWindow: true });
     tabsList.innerHTML = '';
+
     tabs.forEach(tab => {
-      const btn = document.createElement('button');
-      btn.style.cssText = 'background:transparent;border:none;color:var(--text-color);text-align:left;padding:6px 8px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;overflow:hidden;width:100%;transition:background .15s;';
-      if (tab.favIconUrl) { const img = document.createElement('img'); img.src = tab.favIconUrl; img.style.cssText = 'width:16px;height:16px;flex-shrink:0;border-radius:2px;'; btn.appendChild(img); }
+      const row = document.createElement('div');
+      const isSelected = selectedTabIds.has(tab.id);
+      row.className = `tab-row-item ${isSelected ? 'selected' : ''}`;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'tab-checkbox';
+      checkbox.checked = isSelected;
+
+      if (tab.favIconUrl) {
+        const img = document.createElement('img');
+        img.src = tab.favIconUrl;
+        img.style.cssText = 'width:16px;height:16px;flex-shrink:0;border-radius:2px;';
+        row.appendChild(img);
+      }
+
       const span = document.createElement('span');
-      span.textContent = tab.title; span.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.82rem;';
-      btn.appendChild(span);
-      btn.onmouseover = () => btn.style.background = 'var(--accent-hover)';
-      btn.onmouseout = () => btn.style.background = 'transparent';
-      btn.onclick = () => { selectedTabId = tab.id; isTabSharingEnabled = true; updateContextPill(); tabsPanel.style.display = 'none'; };
-      tabsList.appendChild(btn);
+      span.textContent = tab.title || tab.url;
+      span.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.82rem;flex:1;';
+
+      row.appendChild(checkbox);
+      row.appendChild(span);
+
+      const toggleSelection = () => {
+        if (selectedTabIds.has(tab.id)) {
+          selectedTabIds.delete(tab.id);
+          checkbox.checked = false;
+          row.classList.remove('selected');
+        } else {
+          selectedTabIds.add(tab.id);
+          checkbox.checked = true;
+          row.classList.add('selected');
+        }
+        isTabSharingEnabled = true;
+        updateContextPill();
+      };
+
+      row.onclick = (e) => {
+        if (e.target !== checkbox) toggleSelection();
+      };
+      checkbox.onchange = () => toggleSelection();
+
+      tabsList.appendChild(row);
     });
+
+    if (tabsSelectAllBtn) {
+      const allSelected = tabs.length > 0 && tabs.every(t => selectedTabIds.has(t.id));
+      tabsSelectAllBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+    }
+  }
+
+  if (tabsSelectAllBtn) {
+    tabsSelectAllBtn.onclick = async (e) => {
+      e.stopPropagation();
+      const tabs = await chrome.tabs.query({ currentWindow: true });
+      const allSelected = tabs.length > 0 && tabs.every(t => selectedTabIds.has(t.id));
+      if (allSelected) {
+        selectedTabIds.clear();
+      } else {
+        tabs.forEach(t => selectedTabIds.add(t.id));
+      }
+      isTabSharingEnabled = true;
+      updateContextPill();
+      renderTabsList();
+    };
+  }
+
+  tabsMenuBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (tabsPanel.style.display === 'flex') {
+      tabsPanel.style.display = 'none';
+      return;
+    }
+    await renderTabsList();
     tabsPanel.style.display = 'flex';
   });
 
@@ -457,12 +526,161 @@ const initSidepanelApp = async () => {
     } catch (e) {
       console.error("Error setting dismissedTabId:", e);
     }
+    selectedTabIds.clear();
     selectedTabId = null;
     isTabSharingEnabled = false;
     updateContextPill();
   });
 
-  // File attachment feature removed
+  chrome.tabs.onActivated.addListener((activeInfo) => {
+    if (activeInfo.tabId !== dismissedTabId) {
+      dismissedTabId = null;
+      isTabSharingEnabled = true;
+    }
+    if (selectedTabIds.size === 0 && isTabSharingEnabled) updateContextPill();
+  });
+
+  chrome.tabs.onUpdated.addListener((id, _, tab) => {
+    if (tab.active && id !== dismissedTabId) {
+      dismissedTabId = null;
+      isTabSharingEnabled = true;
+    }
+    if (((selectedTabIds.size === 0 && tab.active) || selectedTabIds.has(id)) && isTabSharingEnabled) updateContextPill();
+  });
+  updateContextPill();
+
+  // Multi-tab text extraction helper
+  async function extractMultiTabContext(tabIds) {
+    if (!tabIds || tabIds.length === 0) return "No readable text found.";
+
+    const totalBudget = 75000;
+    const count = tabIds.length;
+    const perTabCap = count <= 2 ? 30000 : Math.max(10000, Math.floor(totalBudget / count));
+
+    const sections = [];
+    for (const tabId of tabIds) {
+      try {
+        const tab = await chrome.tabs.get(tabId).catch(() => null);
+        if (!tab) continue;
+
+        const tabTitle = tab.title || 'Untitled Tab';
+        const tabUrl = tab.url || '';
+
+        const pageRes = await executeOnTab("GET_PAGE_TEXT", null, null, null, null, null, tabId);
+        let tabText = "";
+        if (pageRes.error) {
+          tabText = `[Could not extract text: ${pageRes.error}]`;
+        } else if (pageRes.result) {
+          tabText = pageRes.result.trim().substring(0, perTabCap);
+        } else {
+          tabText = "No readable text found on page.";
+        }
+
+        sections.push(`=== TAB: ${tabTitle} (${tabUrl}) ===\n${tabText}`);
+      } catch (err) {
+        console.warn(`[VRH.AI Multi-Tab] Error extracting tab ${tabId}:`, err);
+      }
+    }
+
+    return sections.length > 0 ? sections.join('\n\n') : "No readable text found.";
+  }
+
+  // ── VISION / IMAGE ATTACHMENT CONTROLS & GATING ──
+  const attachImageBtn = document.getElementById('attachImageBtn');
+  const captureScreenshotBtn = document.getElementById('captureScreenshotBtn');
+  const imageFileInput = document.getElementById('imageFileInput');
+  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+  const imagePreviewThumb = document.getElementById('imagePreviewThumb');
+  const imagePreviewName = document.getElementById('imagePreviewName');
+  const removeImageBtn = document.getElementById('removeImageBtn');
+
+  function updateVisionCapabilityGate() {
+    const activeModel = modelSelect.value || '';
+    const isVision = (typeof window.isVisionModel === 'function')
+      ? window.isVisionModel(activeModel)
+      : /vision|gpt-4o|gemini|claude-3|qwen-?vl|pixtral|llava|-vl\b/i.test(activeModel);
+
+    if (attachImageBtn && captureScreenshotBtn) {
+      if (isVision) {
+        attachImageBtn.disabled = false;
+        captureScreenshotBtn.disabled = false;
+        attachImageBtn.style.opacity = '1';
+        captureScreenshotBtn.style.opacity = '1';
+        attachImageBtn.style.cursor = 'pointer';
+        captureScreenshotBtn.style.cursor = 'pointer';
+        attachImageBtn.title = 'Attach Image';
+        captureScreenshotBtn.title = 'Attach Active Tab Screenshot';
+      } else {
+        attachImageBtn.disabled = true;
+        captureScreenshotBtn.disabled = true;
+        attachImageBtn.style.opacity = '0.35';
+        captureScreenshotBtn.style.opacity = '0.35';
+        attachImageBtn.style.cursor = 'not-allowed';
+        captureScreenshotBtn.style.cursor = 'not-allowed';
+        attachImageBtn.title = "This model doesn't support images";
+        captureScreenshotBtn.title = "This model doesn't support images";
+
+        if (currentAttachedImage) {
+          clearAttachedImage();
+          console.warn("[VRH.AI Vision] Attached image cleared: current model does not support image input.");
+        }
+      }
+    }
+  }
+
+  function setAttachedImage(url, name) {
+    currentAttachedImage = { url, name };
+    if (imagePreviewThumb) imagePreviewThumb.src = url;
+    if (imagePreviewName) imagePreviewName.textContent = name;
+    if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
+  }
+
+  function clearAttachedImage() {
+    currentAttachedImage = null;
+    if (imagePreviewThumb) imagePreviewThumb.src = '';
+    if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+    if (imageFileInput) imageFileInput.value = '';
+  }
+
+  if (removeImageBtn) {
+    removeImageBtn.addEventListener('click', clearAttachedImage);
+  }
+
+  if (attachImageBtn && imageFileInput) {
+    attachImageBtn.addEventListener('click', () => {
+      if (attachImageBtn.disabled) return;
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        setAttachedImage(evt.target.result, file.name);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (captureScreenshotBtn) {
+    captureScreenshotBtn.addEventListener('click', async () => {
+      if (captureScreenshotBtn.disabled) return;
+      try {
+        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+        if (dataUrl) {
+          setAttachedImage(dataUrl, 'Active Tab Screenshot.png');
+        }
+      } catch (err) {
+        console.error("Screenshot capture error:", err);
+      }
+    });
+  }
+
+  modelSelect.addEventListener('change', () => {
+    updateVisionCapabilityGate();
+  });
+  updateVisionCapabilityGate();
 
   // ── CLOSE FLOATING PANELS ON OUTSIDE CLICK ──
   document.addEventListener('click', (e) => {
@@ -866,21 +1084,38 @@ const initSidepanelApp = async () => {
   }
 
   function appendMessage(text, role = 'user', save = true, metadata = null) {
-    text = text || '';
+    // text can be a string or an array of parts for multimodal messages
+    let displayText = '';
+    let attachedImgUrl = metadata?.imageUrl || null;
+    let attachedImgName = metadata?.imageName || null;
+
+    if (Array.isArray(text)) {
+      const textPart = text.find(p => p.type === 'text');
+      displayText = textPart ? (textPart.text || '') : '';
+      const imgPart = text.find(p => p.type === 'image_url');
+      if (imgPart) {
+        attachedImgUrl = attachedImgUrl || imgPart.image_url?.url || imgPart.url || null;
+      }
+    } else if (typeof text === 'string') {
+      displayText = text;
+    } else if (text && typeof text === 'object') {
+      displayText = text.text || text.content || JSON.stringify(text);
+    }
+
     hideWelcomeScreen();
     const msg = document.createElement('div');
     msg.className = `msg msg-${role}`;
 
     // Extract thinking block if assistant message contains it
     let thinkingHtml = '';
-    let mainText = text;
+    let mainText = displayText;
 
     if (role === 'assistant') {
       const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
-      const thinkMatch = thinkRegex.exec(text);
+      const thinkMatch = thinkRegex.exec(displayText);
       if (thinkMatch) {
         const thinkingText = thinkMatch[1].trim();
-        mainText = text.replace(thinkRegex, '').trim();
+        mainText = displayText.replace(thinkRegex, '').trim();
         
         thinkingHtml = `
           <div class="thinking-container collapsed">
@@ -904,14 +1139,16 @@ const initSidepanelApp = async () => {
         });
       }
     } else {
-      msg.innerHTML = formatMarkdown(text);
+      msg.innerHTML = formatMarkdown(mainText);
     }
 
     // Add context metadata under user messages
-    if (role === 'user' && metadata) {
-      const hasTab = metadata.sharedTab;
-      const hasFiles = metadata.attachedFiles && metadata.attachedFiles.length > 0;
-      if (hasTab || hasFiles) {
+    if (role === 'user') {
+      const hasTab = metadata && metadata.sharedTab;
+      const hasFiles = metadata && metadata.attachedFiles && metadata.attachedFiles.length > 0;
+      const hasImage = !!attachedImgUrl;
+
+      if (hasTab || hasFiles || hasImage) {
         const metaArea = document.createElement('div');
         metaArea.className = 'msg-context-area';
         
@@ -930,19 +1167,33 @@ const initSidepanelApp = async () => {
             metaArea.appendChild(filePill);
           });
         }
+
+        if (hasImage) {
+          const imgThumb = document.createElement('div');
+          imgThumb.className = 'msg-image-thumb';
+          imgThumb.style.cssText = 'margin-top:6px;max-width:180px;max-height:140px;border-radius:8px;overflow:hidden;border:1px solid var(--glass-border);cursor:pointer;';
+          const imgEl = document.createElement('img');
+          imgEl.src = attachedImgUrl;
+          imgEl.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+          imgEl.alt = attachedImgName || 'Attached Image';
+          imgThumb.appendChild(imgEl);
+          imgThumb.title = (attachedImgName || 'Attached Image') + ' (Click to open full size)';
+          imgThumb.onclick = () => window.open(attachedImgUrl, '_blank');
+          metaArea.appendChild(imgThumb);
+        }
         
         msg.appendChild(metaArea);
       }
     }
 
     // Add copy/edit buttons to user messages
-    if (role === 'user' && text) {
-      addUserActions(msg, text);
+    if (role === 'user' && displayText) {
+      addUserActions(msg, displayText);
     }
 
     // Add copy/regenerate buttons to assistant messages
-    if (role === 'assistant' && text) {
-      addAssistantActions(msg, text);
+    if (role === 'assistant' && displayText) {
+      addAssistantActions(msg, displayText);
     }
 
     chatArea.appendChild(msg);
@@ -962,165 +1213,140 @@ const initSidepanelApp = async () => {
     return d;
   }
 
-  // ── PDF PARSER ──
-  async function decompressDeflate(bytes) {
-    const ds = new DecompressionStream('deflate');
-    const writer = ds.writable.getWriter();
-    writer.write(bytes);
-    writer.close();
-    
-    const reader = ds.readable.getReader();
-    const chunks = [];
-    let totalLength = 0;
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      totalLength += value.length;
+  // ── PDF PARSER WITH PDF.JS & TESSERACT OCR FALLBACK ──
+  const OCR_MAX_PAGES = 5;
+
+  function showSidepanelProgress(msg) {
+    let bar = document.getElementById('vrh-pdf-progress-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'vrh-pdf-progress-bar';
+      bar.style.cssText = 'position:fixed;bottom:75px;left:16px;right:16px;background:rgba(30,41,59,0.95);border:1px solid rgba(132,204,22,0.4);border-radius:8px;padding:8px 12px;font-size:12px;color:#d9f99d;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);transition:opacity 0.2s;';
+      document.body.appendChild(bar);
     }
-    
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    for (let chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
+    if (!msg) {
+      bar.style.display = 'none';
+      return;
     }
-    return result;
+    bar.style.display = 'flex';
+    bar.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid #84cc16;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span><span>${escapeHtml(msg)}</span>`;
   }
 
-  function decodePDFString(str) {
-    return str
-      .replace(/\\([0-7]{3})/g, (m, oct) => String.fromCharCode(parseInt(oct, 8)))
-      .replaceAll('\\r', '\r')
-      .replaceAll('\\n', '\n')
-      .replaceAll('\\t', '\t')
-      .replaceAll('\\b', '\b')
-      .replaceAll('\\f', '\f')
-      .replaceAll('\\(', '(')
-      .replaceAll('\\)', ')')
-      .replaceAll('\\\\', '\\');
-  }
+  async function runTesseractOCR(canvas, onProgress) {
+    const tesseractLib = (typeof window !== 'undefined' && window.Tesseract) || (typeof Tesseract !== 'undefined' ? Tesseract : null);
+    if (!tesseractLib || typeof tesseractLib.createWorker !== 'function') {
+      throw new Error('Tesseract OCR library is not available');
+    }
 
-  function findStringPos(bytes, str, startFrom = 0) {
-    const strLen = str.length;
-    const byteLen = bytes.length;
-    if (byteLen - startFrom < strLen) return -1;
-
-    for (let i = startFrom; i <= byteLen - strLen; i++) {
-      let match = true;
-      for (let j = 0; j < strLen; j++) {
-        if (bytes[i + j] !== str.charCodeAt(j)) {
-          match = false;
-          break;
+    const worker = await tesseractLib.createWorker('eng', 1, {
+      workerPath: chrome.runtime.getURL('lib/tesseract/worker.min.js'),
+      corePath: chrome.runtime.getURL('lib/tesseract/tesseract-core-lstm.wasm.js'),
+      langPath: chrome.runtime.getURL('lib/tesseract/'),
+      logger: m => {
+        if (m.status === 'recognizing text' && typeof onProgress === 'function') {
+          onProgress(m.progress || 0);
         }
       }
-      if (match) return i;
+    });
+
+    try {
+      const res = await worker.recognize(canvas);
+      return res.data?.text || '';
+    } finally {
+      await worker.terminate().catch(() => {});
     }
-    return -1;
   }
 
-  function parsePDFTextOperators(decodedText) {
-    let text = "";
-    const btRegex = /BT[\s\S]*?ET/g;
-    let btMatch;
-    while ((btMatch = btRegex.exec(decodedText)) !== null) {
-      const block = btMatch[0];
-      
-      const tjRegex = /\(([^)]*)\)\s*Tj/g;
-      let tjMatch;
-      while ((tjMatch = tjRegex.exec(block)) !== null) {
-        text += decodePDFString(tjMatch[1]) + " ";
-      }
-      
-      const tj2Regex = /\[([\s\S]*?)\]\s*TJ/g;
-      let tj2Match;
-      while ((tj2Match = tj2Regex.exec(block)) !== null) {
-        const inner = tj2Match[1];
-        const strRegex = /\(([^)]*)\)/g;
-        let strMatch;
-        while ((strMatch = strRegex.exec(inner)) !== null) {
-          text += decodePDFString(strMatch[1]);
+  async function extractTextFromPDFBuffer(arrayBuffer, onProgress) {
+    const pdfLib = (typeof window !== 'undefined' && window.pdfjsLib) || (typeof pdfjsLib !== 'undefined' ? pdfjsLib : null);
+    if (!pdfLib) {
+      throw new Error("PDF.js library is not loaded. Please ensure pdf.min.js is included.");
+    }
+
+    if (!pdfLib.GlobalWorkerOptions.workerSrc && typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+      pdfLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('lib/pdfjs/pdf.worker.min.js');
+    }
+
+    const loadingTask = pdfLib.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: true,
+      isEvalSupported: false
+    });
+
+    const pdfDoc = await loadingTask.promise;
+    const numPages = pdfDoc.numPages;
+    const pageTexts = [];
+    const emptyPageIndices = [];
+
+    // 1. Direct text extraction with pdf.js (handles CID fonts, subsetted fonts, Google Docs/LaTeX PDFs)
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        const content = await page.getTextContent();
+        const pageStr = content.items
+          .map(item => item.str || '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        pageTexts.push(pageStr);
+        if (pageStr.length < 10) {
+          emptyPageIndices.push(pageNum);
         }
-        text += " ";
+      } catch (err) {
+        console.warn(`[VRH.AI PDF] Error extracting text from page ${pageNum}:`, err);
+        pageTexts.push('');
+        emptyPageIndices.push(pageNum);
       }
     }
-    return text;
-  }
 
-  async function extractTextFromPDFBuffer(arrayBuffer) {
-    const bytes = new Uint8Array(arrayBuffer);
-    const textDecoder = new TextDecoder('utf-8');
-    const len = bytes.byteLength;
-    let pos = 0;
-    let fullText = "";
+    const totalExtractedLength = pageTexts.reduce((acc, t) => acc + t.length, 0);
 
-    while (pos < len) {
-      const nextObj = findStringPos(bytes, " obj", pos);
-      if (nextObj === -1) break;
+    // 2. OCR Fallback for scanned / image-only PDFs
+    // If empty pages exist and the document has very little or no extracted text
+    if (emptyPageIndices.length > 0 && (totalExtractedLength < 50 || emptyPageIndices.length >= Math.ceil(numPages / 2))) {
+      const pagesToOcr = emptyPageIndices.slice(0, OCR_MAX_PAGES);
+      console.log(`[VRH.AI PDF] Triggering OCR fallback for ${pagesToOcr.length} scanned pages (capped at ${OCR_MAX_PAGES})...`);
 
-      const streamStart = findStringPos(bytes, "stream", nextObj);
-      if (streamStart === -1) {
-        pos = nextObj + 4;
-        continue;
-      }
+      let completedCount = 0;
+      for (const pageNum of pagesToOcr) {
+        completedCount++;
+        const progressMsg = `OCR: page ${completedCount} of ${pagesToOcr.length}…`;
+        if (typeof onProgress === 'function') onProgress(progressMsg);
+        showSidepanelProgress(progressMsg);
 
-      const nextNextObj = findStringPos(bytes, " obj", nextObj + 4);
-      if (nextNextObj !== -1 && streamStart > nextNextObj) {
-        pos = nextObj + 4;
-        continue;
-      }
+        try {
+          const page = await pdfDoc.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
 
-      const dictText = textDecoder.decode(bytes.subarray(nextObj, streamStart));
-      const lengthMatch = /\/Length\s+(\d+)/.exec(dictText);
-      const filterMatch = /\/Filter\s*\/FlateDecode/.exec(dictText);
+          await page.render({ canvasContext: ctx, viewport }).promise;
 
-      let length = null;
-      if (lengthMatch) {
-        length = parseInt(lengthMatch[1]);
-      }
+          const ocrText = await runTesseractOCR(canvas, (pct) => {
+            const detailMsg = `OCR: page ${completedCount} of ${pagesToOcr.length} (${Math.round(pct * 100)}%)…`;
+            if (typeof onProgress === 'function') onProgress(detailMsg);
+            showSidepanelProgress(detailMsg);
+          });
 
-      let binaryStart = streamStart + 6;
-      if (bytes[binaryStart] === 13 && bytes[binaryStart + 1] === 10) binaryStart += 2;
-      else if (bytes[binaryStart] === 10) binaryStart += 1;
-
-      let streamBytes;
-      if (length !== null && !isNaN(length) && binaryStart + length <= len) {
-        streamBytes = bytes.subarray(binaryStart, binaryStart + length);
-        pos = binaryStart + length;
-      } else {
-        const endstreamPos = findStringPos(bytes, "endstream", binaryStart);
-        if (endstreamPos !== -1) {
-          let endOffset = endstreamPos;
-          if (bytes[endOffset - 1] === 10) {
-            endOffset--;
-            if (bytes[endOffset - 1] === 13) endOffset--;
+          if (ocrText && ocrText.trim()) {
+            pageTexts[pageNum - 1] = ocrText.trim();
           }
-          streamBytes = bytes.subarray(binaryStart, endOffset);
-          pos = endstreamPos + 9;
-        } else {
-          pos = binaryStart;
-          continue;
+        } catch (ocrErr) {
+          console.error(`[VRH.AI PDF] OCR failed for page ${pageNum}:`, ocrErr);
         }
       }
 
-      if (filterMatch) {
-        try {
-          const decompressed = await decompressDeflate(streamBytes);
-          const decodedText = textDecoder.decode(decompressed);
-          fullText += parsePDFTextOperators(decodedText) + " ";
-        } catch (e) {
-          // Ignore decompression errors
-        }
-      } else {
-        try {
-          const decodedText = textDecoder.decode(streamBytes);
-          fullText += parsePDFTextOperators(decodedText) + " ";
-        } catch (e) {}
-      }
+      showSidepanelProgress(null);
     }
 
-    return fullText.trim();
+    return pageTexts.filter(Boolean).join('\n\n').trim();
+  }
+
+  if (typeof window !== 'undefined') {
+    window.extractTextFromPDFBuffer = extractTextFromPDFBuffer;
   }
 
   // ── TAB EXECUTION (with auto content-script injection) ──
@@ -1326,25 +1552,27 @@ const initSidepanelApp = async () => {
     throw new Error("No configured AI providers found. Please open Settings and enter your API credentials.");
   }
 
-  // ── GENERIC LLM API — STREAMING ──
+  // ── GENERIC LLM API — STREAMING WITH BACKOFF RETRY ──
   let activeAbortController = null;
 
   async function callLLMStream(messages, onChunk, signal) {
     const { endpoint, headers, model } = await getInferenceConfig();
+    const client = (typeof window !== 'undefined' && window.apiClient) || (typeof apiClient !== 'undefined' ? apiClient : null);
+    if (client && typeof client.stream === 'function') {
+      return await client.stream('', model, messages, onChunk, signal, { endpoint, headers });
+    }
 
+    // Fallback if apiClient is not loaded
     const sanitized = sanitizeMessages(messages);
-
     const res = await fetch(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({ model, messages: sanitized, stream: true, max_tokens: 2048 }),
       signal
     });
-
-    if (!res.ok) { 
-      const e = await res.json().catch(() => ({})); 
-      const errMsg = e.error?.message || e.error?.metadata?.raw || `API Error (${res.status})`;
-      throw new Error(errMsg); 
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `API Error (${res.status})`);
     }
 
     const reader = res.body.getReader();
@@ -1371,25 +1599,17 @@ const initSidepanelApp = async () => {
               let updated = false;
               const reason = delta.reasoning_content || delta.reasoning;
               if (reason) {
-                if (!hasThinking) {
-                  fullText += "<think>";
-                  hasThinking = true;
-                }
+                if (!hasThinking) { fullText += "<think>"; hasThinking = true; }
                 fullText += reason;
                 updated = true;
               }
               const content = delta.content;
               if (content) {
-                if (hasThinking && !closedThinking) {
-                  fullText += "</think>";
-                  closedThinking = true;
-                }
+                if (hasThinking && !closedThinking) { fullText += "</think>"; closedThinking = true; }
                 fullText += content;
                 updated = true;
               }
-              if (updated && onChunk) {
-                onChunk(fullText);
-              }
+              if (updated && onChunk) onChunk(fullText);
             }
           } catch(e) { /* skip */ }
         }
@@ -1402,10 +1622,15 @@ const initSidepanelApp = async () => {
     return fullText;
   }
 
-  // Non-streaming fallback for Agent mode (needs full JSON responses)
+  // Non-streaming fallback for Agent mode (needs full JSON responses) with retry
   async function callLLM(messages, tools = null, signal) {
     const { endpoint, headers, model } = await getInferenceConfig();
+    const client = (typeof window !== 'undefined' && window.apiClient) || (typeof apiClient !== 'undefined' ? apiClient : null);
+    if (client && typeof client.complete === 'function') {
+      return await client.complete('', model, messages, tools, signal, { endpoint, headers });
+    }
 
+    // Fallback if apiClient is not loaded
     const sanitized = sanitizeMessages(messages);
     const payload = { model, messages: sanitized, max_tokens: 2048 };
     if (tools) payload.tools = tools;
@@ -1417,7 +1642,6 @@ const initSidepanelApp = async () => {
       signal
     });
 
-    // If it failed and we passed tools, auto-retry without tools payload for simpler models
     if (!res.ok && tools) {
       console.warn("Model failed to execute tool call, retrying with raw text fallback...");
       delete payload.tools;
@@ -1473,7 +1697,7 @@ const initSidepanelApp = async () => {
   // ── CHAT SEND HANDLER ──
   const handleSendMessage = async () => {
     const text = chatInput.value.trim();
-    if (!text) return;
+    if (!text && !currentAttachedImage) return;
 
     // Handle slash commands on enter
     const matchedCmd = slashCommands.find(c => c.cmd === text.toLowerCase());
@@ -1483,24 +1707,49 @@ const initSidepanelApp = async () => {
     let sharedTabTitle = null;
     if (isTabSharingEnabled) {
       try {
-        let tab;
-        if (selectedTabId) tab = await chrome.tabs.get(selectedTabId).catch(() => null);
-        if (!tab) { const [a] = await chrome.tabs.query({ active: true, currentWindow: true }); tab = a; }
-        if (tab) sharedTabTitle = tab.title;
+        if (selectedTabIds.size > 1) {
+          sharedTabTitle = `${selectedTabIds.size} tabs`;
+        } else if (selectedTabIds.size === 1) {
+          const singleId = Array.from(selectedTabIds)[0];
+          const tab = await chrome.tabs.get(singleId).catch(() => null);
+          if (tab) sharedTabTitle = tab.title;
+        } else {
+          const [a] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (a) sharedTabTitle = a.title;
+        }
       } catch (e) {
         console.error("Error resolving tab for metadata:", e);
       }
     }
 
     const filesMetadata = attachedFiles.map(f => f.name);
+    const imgAttachment = currentAttachedImage;
     const metadata = {
       sharedTab: sharedTabTitle,
-      attachedFiles: filesMetadata
+      attachedFiles: filesMetadata,
+      imageUrl: imgAttachment ? imgAttachment.url : null,
+      imageName: imgAttachment ? imgAttachment.name : null
     };
 
+    // Construct multimodal or text user content
+    let userMsgContent;
+    if (imgAttachment) {
+      if (typeof window.buildMultimodalMessage === 'function') {
+        userMsgContent = window.buildMultimodalMessage('user', text || '(Image attached)', [imgAttachment.url]).content;
+      } else {
+        userMsgContent = [
+          { type: "text", text: text || '(Image attached)' },
+          { type: "image_url", image_url: { url: imgAttachment.url } }
+        ];
+      }
+    } else {
+      userMsgContent = text;
+    }
+
     switchTab('chat');
-    appendMessage(text, 'user', true, metadata);
+    appendMessage(userMsgContent, 'user', true, metadata);
     chatInput.value = ''; chatInput.style.height = 'auto';
+    if (currentAttachedImage) clearAttachedImage();
     historyPanel.style.display = 'none'; tabsPanel.style.display = 'none'; slashHint.style.display = 'none';
 
     setSendLoading(true);
@@ -1517,14 +1766,26 @@ const initSidepanelApp = async () => {
         // ── ASK MODE (Streaming) ──
         let pageText = "No readable text found.";
         if (isTabSharingEnabled) {
-          const pageRes = await executeOnTab("GET_PAGE_TEXT");
-          if (pageRes.error) {
-            console.warn("executeOnTab page text warning (expected for restricted pages):", pageRes.error);
-            pageText = `[Error reading page context: ${pageRes.error}]`;
+          if (selectedTabIds.size > 1) {
+            pageText = await extractMultiTabContext(Array.from(selectedTabIds));
+          } else if (selectedTabIds.size === 1) {
+            const singleId = Array.from(selectedTabIds)[0];
+            const pageRes = await executeOnTab("GET_PAGE_TEXT", null, null, null, null, null, singleId);
+            if (pageRes.error) {
+              pageText = `[Error reading page context: ${pageRes.error}]`;
+            } else {
+              pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
+            }
           } else {
-            pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
+            const pageRes = await executeOnTab("GET_PAGE_TEXT");
+            if (pageRes.error) {
+              console.warn("executeOnTab page text warning (expected for restricted pages):", pageRes.error);
+              pageText = `[Error reading page context: ${pageRes.error}]`;
+            } else {
+              pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
+            }
           }
-          console.log(`Extracted page text status: ${pageRes.error ? 'error' : pageText.length + ' chars'}`);
+          console.log(`Extracted page text status: ${pageText.substring(0, 50)}... (${pageText.length} chars)`);
         }
 
         // Build file context if any files are attached

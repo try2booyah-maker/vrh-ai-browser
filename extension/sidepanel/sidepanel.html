@@ -6,7 +6,11 @@
   <title>VRH.AI - Side Panel</title>
   <link rel="stylesheet" href="sidepanel.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../lib/purify.min.js"></script>
   <script src="../lib/sanitize.js"></script>
+  <script src="../lib/apiClient.js"></script>
+  <script src="../lib/pdfjs/pdf.min.js"></script>
+  <script src="../lib/tesseract/tesseract.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -64,7 +68,10 @@
 
     <!-- Tabs Panel (floating) -->
     <div id="tabsPanel" class="floating-panel tabs-floating glass" style="display: none;">
-      <h3 class="panel-title">Select a Tab</h3>
+      <div class="tabs-panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 class="panel-title" style="margin: 0;">Multi-Tab Context</h3>
+        <button type="button" id="tabsSelectAllBtn" class="action-link-btn" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.75rem;font-weight:600;">Select All</button>
+      </div>
       <div id="tabsList" class="panel-list"></div>
     </div>
 
@@ -92,13 +99,37 @@
             </button>
           </div>
 
+          <!-- Image Attachment Preview -->
+          <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+            <div class="image-preview-card">
+              <img id="imagePreviewThumb" src="" alt="preview" />
+              <div class="image-preview-meta">
+                <span id="imagePreviewName" class="image-preview-filename">image.png</span>
+                <span id="imagePreviewDesc" class="image-preview-desc">Attached for vision analysis</span>
+              </div>
+              <button type="button" id="removeImageBtn" class="icon-btn image-remove-btn" title="Remove image">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
           <!-- Slash Command Hint -->
           <div id="slashHint" class="slash-hint" style="display: none;"></div>
 
           <textarea id="chatInput" placeholder="Ask anything or type / for commands..." rows="1"></textarea>
           <div class="input-toolbar">
             <div class="toolbar-left">
-              <button class="icon-btn outline" id="tabsMenuBtn" title="Share Tab Context" style="font-weight: bold; font-size: 13px;">@</button>
+              <button class="icon-btn outline" id="tabsMenuBtn" title="Share Tab Context" style="font-weight: bold; font-size: 13px; position: relative;">
+                @
+                <span id="tabCountBadge" class="tab-count-badge" style="display: none;"></span>
+              </button>
+              <button type="button" class="icon-btn outline" id="attachImageBtn" title="Attach Image">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+              <button type="button" class="icon-btn outline" id="captureScreenshotBtn" title="Attach Active Tab Screenshot">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+              <input type="file" id="imageFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display: none;" />
             </div>
             <div class="toolbar-right">
               <select id="modelSelect" class="dropdown-select">

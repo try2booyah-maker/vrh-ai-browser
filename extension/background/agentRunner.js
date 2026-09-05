@@ -7,6 +7,7 @@
  */
 
 import { cdpController } from './cdpController.js';
+import '../lib/apiClient.js';
 
 export const AGENT_TOOLS = [
   {
@@ -524,47 +525,41 @@ export class AgentRunner {
   }
 
   /**
-   * Resilient Request Dispatcher with Exponential Backoff on 429/500/503.
+   * Resilient Request Dispatcher routing through centralized fetchWithRetry
+   * with exponential backoff (base 500ms, factor 2, ±20% jitter), Retry-After support,
+   * and AbortSignal cancellation.
    */
   async _dispatchLLMRequest(endpoint, headers, payload, maxRetries = 3) {
-    let attempt = 0;
-    let delay = 1000;
+    const fetchFn = (typeof globalThis !== 'undefined' && globalThis.fetchWithRetry) || 
+                    (typeof fetchWithRetry === 'function' ? fetchWithRetry : null);
 
-    while (attempt <= maxRetries) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload),
-          signal: this.abortController?.signal
-        });
-
-        if (res.ok) {
-          return await res.json();
-        }
-
-        // Retryable HTTP status codes
-        if ([429, 500, 502, 503, 504].includes(res.status) && attempt < maxRetries) {
-          attempt++;
-          console.warn(`[AgentRunner] HTTP ${res.status} from ${endpoint}. Retrying in ${delay}ms (attempt ${attempt}/${maxRetries})...`);
-          await new Promise(r => setTimeout(r, delay));
-          delay *= 2; // exponential backoff
-          continue;
-        }
-
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `API Error (${res.status})`);
-      } catch (err) {
-        if (err.name === 'AbortError') throw err;
-        if (attempt < maxRetries) {
-          attempt++;
-          await new Promise(r => setTimeout(r, delay));
-          delay *= 2;
-          continue;
-        }
-        throw err;
-      }
+    if (fetchFn) {
+      const res = await fetchFn(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: this.abortController?.signal
+      }, {
+        maxRetries,
+        baseDelayMs: 500,
+        factor: 2,
+        jitterFraction: 0.2
+      });
+      return await res.json();
     }
+
+    // Fallback if apiClient not initialized
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: this.abortController?.signal
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `API Error (${res.status})`);
+    }
+    return await res.json();
   }
 
   /**

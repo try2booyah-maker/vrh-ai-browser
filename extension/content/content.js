@@ -18,6 +18,17 @@ const SENSITIVE_KEYWORDS = [
   'confirm payment', 'authorize payment', 'purchase now'
 ];
 
+const SENSITIVE_KEYWORDS_INTL = [
+  // Spanish
+  'comprar ahora', 'pagar ahora', 'pagar', 'confirmar pedido', 'confirmar compra', 'eliminar cuenta', 'borrar cuenta',
+  // Portuguese
+  'comprar agora', 'pagar agora', 'confirmar pedido', 'confirmar compra', 'excluir conta', 'eliminar conta', 'apagar conta',
+  // Hindi (transliterated)
+  'kharidein', 'abhi kharidein', 'kharido', 'bhugtan karein', 'pay karein', 'order confirm karein', 'account delete karein', 'account hatayein'
+];
+
+const ALL_SENSITIVE_KEYWORDS = [...SENSITIVE_KEYWORDS, ...SENSITIVE_KEYWORDS_INTL];
+
 const ANNOYANCE_SELECTORS = [
   '#onetrust-accept-btn-handler',
   '#accept-recommended-btn-handler',
@@ -60,15 +71,77 @@ function sweepAnnoyances() {
 // SENSITIVITY & CAPTCHA DETECTION
 // ══════════════════════════════════════════════════
 function isElementSensitive(el, text) {
-  const combined = (
-    (text || '') + ' ' +
-    (el.getAttribute('aria-label') || '') + ' ' +
-    (el.getAttribute('title') || '') + ' ' +
-    (el.name || '') + ' ' +
-    (el.id || '') + ' ' +
-    (el.className || '')
-  ).toLowerCase();
-  return SENSITIVE_KEYWORDS.some(kw => combined.includes(kw));
+  if (!el) return false;
+
+  const rawText = (text || el.textContent || el.innerText || '').trim();
+  const ariaLabel = el.getAttribute ? (el.getAttribute('aria-label') || '') : '';
+  const title = el.getAttribute ? (el.getAttribute('title') || '') : '';
+  const name = el.name || (el.getAttribute ? el.getAttribute('name') : '') || '';
+  const id = el.id || '';
+  const className = (typeof el.className === 'string' ? el.className : '') || '';
+  const value = el.value || '';
+
+  const combined = `${rawText} ${ariaLabel} ${title} ${name} ${id} ${className} ${value}`.toLowerCase();
+
+  // 1. Keyword check (English + International)
+  if (ALL_SENSITIVE_KEYWORDS.some(kw => combined.includes(kw))) {
+    return true;
+  }
+
+  // 2. Currency symbol immediately adjacent to a number ($ € £ ₹)
+  const CURRENCY_REGEX = /(?:[\$€£₹]\s*\d|\d\s*[\$€£₹])/;
+  if (CURRENCY_REGEX.test(combined) || CURRENCY_REGEX.test(rawText) || CURRENCY_REGEX.test(value)) {
+    return true;
+  }
+
+  // 3. Structural signals: enclosing form inspection
+  const form = el.closest ? el.closest('form') : null;
+  const tagName = (el.tagName || '').toUpperCase();
+  const type = (el.type || (el.getAttribute && el.getAttribute('type')) || '').toLowerCase();
+  const isSubmit = (tagName === 'BUTTON' && (!type || type === 'submit')) ||
+                   (tagName === 'INPUT' && (type === 'submit' || type === 'image'));
+
+  if (form) {
+    // Flag submit buttons or clickables in forms containing credit card autocomplete fields
+    const ccField = form.querySelector ? form.querySelector('[autocomplete^="cc-"], [autocomplete^="CC-"]') : null;
+    if (ccField && (isSubmit || tagName === 'BUTTON' || tagName === 'INPUT')) {
+      return true;
+    }
+
+    // Flag buttons/elements if enclosing form explicitly displays currency amounts
+    const formText = form.textContent || '';
+    if (CURRENCY_REGEX.test(formText)) {
+      return true;
+    }
+  }
+
+  // 4. Nearby text in immediate parent container with currency amounts
+  if (el.parentElement) {
+    const parentText = el.parentElement.textContent || '';
+    if (CURRENCY_REGEX.test(parentText)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+if (typeof window !== 'undefined') {
+  window.isElementSensitive = isElementSensitive;
+  window.SENSITIVE_KEYWORDS = SENSITIVE_KEYWORDS;
+  window.SENSITIVE_KEYWORDS_INTL = SENSITIVE_KEYWORDS_INTL;
+  window.ALL_SENSITIVE_KEYWORDS = ALL_SENSITIVE_KEYWORDS;
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.isElementSensitive = isElementSensitive;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    isElementSensitive,
+    SENSITIVE_KEYWORDS,
+    SENSITIVE_KEYWORDS_INTL,
+    ALL_SENSITIVE_KEYWORDS
+  };
 }
 
 function detectCaptchaOr2FA() {

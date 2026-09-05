@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Credit Card Form Fixture</title></head>
+<body>
+  <form id="checkout-form" action="/pay" method="POST">
+    <label for="cc-input">Credit Card Number</label>
+    <input type="text" id="cc-input" name="card_number" autocomplete="cc-number" placeholder="4111 2222 3333 4444" />
+    <label for="exp">Expiry</label>
+    <input type="text" id="exp" name="card_exp" autocomplete="cc-exp" />
+    <label for="cvc">CVV</label>
+    <input type="text" id="cvc" name="card_cvc" autocomplete="cc-csc" />
+    <button id="icon-submit-btn" type="submit" class="icon-submit">
+      <svg width="20" height="20" viewBox="0 0 20 20"><path d="M0 0h20v20H0z"/></svg>
+    </button>
+  </form>
+</body>
+</html>

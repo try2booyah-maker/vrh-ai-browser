@@ -49,5 +49,16 @@
       },
       "description": "Toggle VRH.AI Side Panel"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "lib/pdfjs/*",
+        "lib/tesseract/*"
+      ],
+      "matches": [
+        "chrome-extension://*/*"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - VRH.AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-color: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary-color: #84cc16; /* lime-500 */
+      --primary-hover: #a3e635; /* lime-400 */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(132, 204, 22, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+    }
+
+    .container {
+      max-width: 760px;
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 48px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #84cc16, #10b981);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .last-updated {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 32px 0;
+    }
+
+    section {
+      margin-bottom: 28px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-bottom: 16px;
+    }
+
+    li {
+      position: relative;
+      padding-left: 20px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .btn-close {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 10px 24px;
+      background: var(--primary-color);
+      color: #000;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-close:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">VRH.AI</div>
+      <h1>Privacy Policy</h1>
+      <div class="last-updated">Last updated: June 23, 2026</div>
+    </div>
+    
+    <div class="divider"></div>
+
+    <section>
+      <h2>1. Privacy Commitment</h2>
+      <p>At VRH.AI, we believe that your data belongs to you. This extension is designed from the ground up to respect your privacy and secure your information. All computational processes, configurations, and conversation logs reside exclusively on your local device.</p>
+    </section>
+
+    <section>
+      <h2>2. Data Collection and Transmission</h2>
+      <p>VRH.AI does not collect, harvest, or transmit your personal data. Here is how your information is handled:</p>
+      <ul>
+        <li><strong>No Telemetry/Analytics:</strong> We do not track your usage habits, clicks, or prompt histories. We do not use cookies or run remote telemetry servers.</li>
+        <li><strong>API Communications:</strong> Chat prompts, translation texts, and document summaries are sent directly from your browser to your configured AI provider using the custom API Endpoint and API Key you specify. No intermediary proxy is used by VRH.AI.</li>
+        <li><strong>No Page Scraping:</strong> Tab contents and shared documents are parsed locally within your browser sandbox solely to feed context to your chosen LLM on your direct command.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Local Storage Architecture</h2>
+      <p>Any settings you adjust, models you select, and chat histories you create are saved locally using Chrome's extension storage engine (<code>chrome.storage.local</code>). This data is encrypted/isolated by your browser sandboxing and is inaccessible to external websites or third parties.</p>
+    </section>
+
+    <section>
+      <h2>4. Third-Party Services</h2>
+      <p>Your API key and context data are transmitted directly to your configured AI provider for text inference. By configuring a provider, you agree to their standard privacy guidelines and models processing policies. You can consult your chosen provider's data retention policies on their official website.</p>
+    </section>
+
+    <section>
+      <h2>5. Control Over Your Data</h2>
+      <p>Because all configuration data remains on your physical machine, you retain complete authority. You can export settings, download chat databases, or completely wipe all extension local memory instantly from the VRH.AI settings dashboard.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <div class="footer">
+      <p>© 2026 VRH.AI. Open-source under MIT License.</p>
+      <a href="#" onclick="window.close(); return false;" class="btn-close">Close Page</a>
+    </div>
+  </div>
+</body>
+</html>

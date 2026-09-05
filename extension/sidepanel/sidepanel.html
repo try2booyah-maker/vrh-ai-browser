@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRH.AI - Side Panel</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../lib/sanitize.js"></script>
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="top-bar glass">
+      <div class="left-actions">
+        <div id="themeToggle" class="theme-toggle-btn">VRH.AI</div>
+      </div>
+      <div class="right-actions">
+        <button class="icon-btn" id="newChatBtn" title="New Chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="icon-btn" id="historyBtn" title="History">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        </button>
+        <button class="icon-btn" id="settingsBtn" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══ TAB BAR ═══ -->
+    <nav class="tab-bar">
+      <button class="tab-item active" data-tab="chat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </button>
+      <button class="tab-item" data-tab="summarize">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Summarize
+      </button>
+      <button class="tab-item" data-tab="write">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Write
+      </button>
+      <button class="tab-item" data-tab="translate">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+        Translate
+      </button>
+      <button class="tab-item" data-tab="agent">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>
+        Agent
+      </button>
+      <div class="tab-indicator"></div>
+    </nav>
+
+    <!-- ═══ PANELS ═══ -->
+
+    <!-- History Panel (floating) -->
+    <div id="historyPanel" class="floating-panel glass" style="display: none; top: 100px; right: 10px;">
+      <h3 class="panel-title">Chat History</h3>
+      <div id="historyList" class="panel-list"></div>
+    </div>
+
+    <!-- Tabs Panel (floating) -->
+    <div id="tabsPanel" class="floating-panel tabs-floating glass" style="display: none;">
+      <h3 class="panel-title">Select a Tab</h3>
+      <div id="tabsList" class="panel-list"></div>
+    </div>
+
+    <!-- ═══ CHAT VIEW ═══ -->
+    <div class="view-panel active" id="view-chat">
+      <main class="chat-area" id="chatArea">
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-logo">VRH.AI</div>
+          <div class="welcome-subtitle">Your intelligent browser copilot.<br>Ask questions, automate tasks, control the web.</div>
+          <div class="welcome-prompts">
+            <button class="welcome-prompt-btn" data-prompt="Summarize this page for me">📄 Summarize this page</button>
+            <button class="welcome-prompt-btn" data-prompt="What is this website about?">🔍 What is this about?</button>
+            <button class="welcome-prompt-btn" data-prompt="Find the main heading on this page">🎯 Find main heading</button>
+          </div>
+        </div>
+      </main>
+
+      <div class="bottom-area">
+        <div class="input-container glass">
+          <div id="contextPill" class="context-pill" style="display: none;">
+            <span class="context-icon">✨</span>
+            <span class="context-text" id="contextText">Sharing 'Current Tab'</span>
+            <button class="icon-btn context-close" id="contextCloseBtn" style="width: 20px; height: 20px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Slash Command Hint -->
+          <div id="slashHint" class="slash-hint" style="display: none;"></div>
+
+          <textarea id="chatInput" placeholder="Ask anything or type / for commands..." rows="1"></textarea>
+          <div class="input-toolbar">
+            <div class="toolbar-left">
+              <button class="icon-btn outline" id="tabsMenuBtn" title="Share Tab Context" style="font-weight: bold; font-size: 13px;">@</button>
+            </div>
+            <div class="toolbar-right">
+              <select id="modelSelect" class="dropdown-select">
+                <option value="default">No models</option>
+              </select>
+              <select id="modeSelect" class="dropdown-select">
+                <option value="ask">Ask</option>
+                <option value="agent">Agent</option>
+              </select>
+              <button class="send-btn" id="sendBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUMMARIZE VIEW ═══ -->
+    <div class="view-panel" id="view-summarize">
+      <div class="tool-panel">
+        <div class="tool-header">
+          <h2 class="tool-title">📄 Page Summary</h2>
+          <p class="tool-desc">Instantly extract key points from any webpage</p>
+        </div>
+
+        <div class="tool-options">
+          <label class="tool-label">Summary Style</label>
+          <div class="option-pills">
+            <button class="option-pill active" data-style="bullets">• Bullet Points</button>
+            <button class="option-pill" data-style="paragraph">¶ Paragraph</button>
+            <button class="option-pill" data-style="tldr">⚡ TL;DR</button>
+          </div>
+        </div>
+
+        <button class="action-btn-large" id="summarizeBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Summarize Current Page
+        </button>
+
+        <div id="summarizeOutput" class="tool-output"></div>
+      </div>
+    </div>
+
+    <!-- ═══ WRITE VIEW ═══ -->
+    <div class="view-panel" id="view-write">
+      <div class="tool-panel">
+        <div class="tool-header">
+          <h2 class="tool-title">✍️ Writing Tools</h2>
+          <p class="tool-desc">Compose, rewrite, or improve any text</p>
+        </div>
+
+        <div class="tool-options">
+          <label class="tool-label">Mode</label>
+          <div class="option-pills">
+            <button class="option-pill active" data-write-mode="compose">Compose</button>
+            <button class="option-pill" data-write-mode="rewrite">Rewrite</button>
+            <button class="option-pill" data-write-mode="grammar">Fix Grammar</button>
+          </div>
+        </div>
+
+        <div class="tool-options" id="toneOptions">
+          <label class="tool-label">Tone</label>
+          <div class="option-pills">
+            <button class="option-pill active" data-tone="professional">Professional</button>
+            <button class="option-pill" data-tone="casual">Casual</button>
+            <button class="option-pill" data-tone="friendly">Friendly</button>
+            <button class="option-pill" data-tone="formal">Formal</button>
+          </div>
+        </div>
+
+        <textarea id="writeInput" class="tool-textarea" placeholder="Enter your text or describe what to write..." rows="5"></textarea>
+
+        <button class="action-btn-large" id="writeBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate
+        </button>
+
+        <div id="writeOutput" class="tool-output"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TRANSLATE VIEW ═══ -->
+    <div class="view-panel" id="view-translate">
+      <div class="tool-panel">
+        <div class="tool-header">
+          <h2 class="tool-title">🌐 Translate</h2>
+          <p class="tool-desc">Translate text between any languages</p>
+        </div>
+
+        <div class="translate-langs">
+          <select id="sourceLang" class="lang-select">
+            <option value="auto">Auto Detect</option>
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Chinese">Chinese</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Korean">Korean</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Russian">Russian</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+          </select>
+          <button class="swap-btn" id="swapLangs" title="Swap languages">⇄</button>
+          <select id="targetLang" class="lang-select">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Chinese">Chinese</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Korean">Korean</option>
+            <option value="Hindi" selected>Hindi</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Russian">Russian</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+          </select>
+        </div>
+
+        <textarea id="translateInput" class="tool-textarea" placeholder="Enter text to translate..." rows="5"></textarea>
+
+        <button class="action-btn-large" id="translateBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Translate
+        </button>
+
+        <div id="translateOutput" class="tool-output"></div>
+      </div>
+    </div>
+
+    <!-- ═══ AUTONOMOUS AGENT VIEW ═══ -->
+    <div class="view-panel" id="view-agent">
+      <div class="agent-panel">
+        <!-- Agent Header & Status Pill -->
+        <div class="agent-header">
+          <div class="agent-header-left">
+            <h2 class="agent-title">🤖 Browser-Use Agent</h2>
+            <p class="agent-subtitle">Autonomous vision-grounded web automation</p>
+          </div>
+          <div class="agent-status-container">
+            <div id="agentStatusPill" class="agent-status-pill status-idle">
+              <span class="status-dot"></span>
+              <span id="agentStatusText">Idle</span>
+            </div>
+            <div id="agentStepPill" class="agent-step-pill">0 / 20</div>
+          </div>
+        </div>
+
+        <!-- Goal Input Card -->
+        <div class="agent-card glass">
+          <label class="agent-input-label" for="agentGoalInput">Task Objective</label>
+          <textarea id="agentGoalInput" class="agent-textarea" placeholder="e.g. 'Search for latest AI news on Google and summarize top 3 headlines' or 'Click on Pricing and find the Pro plan cost'..." rows="3"></textarea>
+          
+          <div class="agent-example-chips">
+            <button class="example-chip" data-goal="Search Google for 'OpenAI news' and click the first result">🔍 Search Google</button>
+            <button class="example-chip" data-goal="Find and click the Pricing link on this page">💲 Find Pricing</button>
+            <button class="example-chip" data-goal="Scroll down, find the newsletter form, and fill test@example.com">✉️ Newsletter</button>
+          </div>
+
+          <!-- Controls Toolbar -->
+          <div class="agent-action-bar">
+            <button class="agent-btn btn-primary" id="agentStartBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Start Task</span>
+            </button>
+            <button class="agent-btn btn-secondary" id="agentPauseBtn" style="display: none;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              <span>Pause</span>
+            </button>
+            <button class="agent-btn btn-secondary" id="agentResumeBtn" style="display: none;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Resume</span>
+            </button>
+            <button class="agent-btn btn-danger" id="agentStopBtn" style="display: none;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+              <span>Stop</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Activity Feed -->
+        <div class="agent-feed-wrapper">
+          <div class="feed-header-bar">
+            <span class="feed-title">Activity Feed</span>
+            <button class="feed-clear-btn" id="agentClearFeedBtn">Clear</button>
+          </div>
+          <div class="agent-activity-feed" id="agentActivityFeed">
+            <div class="agent-feed-empty" id="agentFeedEmpty">
+              <div class="empty-icon">🎯</div>
+              <div class="empty-text">No active task. Describe what you'd like the agent to do and click <b>Start Task</b>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Human Intervention Modal -->
+      <div id="agentInterventionModal" class="agent-modal-backdrop" style="display: none;">
+        <div class="agent-modal-dialog glass">
+          <div class="modal-badge-warn">⚠️ ACTION REQUIRED</div>
+          <h3 class="modal-dialog-title">Human Intervention</h3>
+          <p id="agentInterventionMsg" class="modal-dialog-desc">Security challenge or sensitive action detected on the webpage. Please solve it on the page and resume.</p>
+          <div class="modal-dialog-actions">
+            <button class="agent-btn btn-primary" id="agentInterventionResumeBtn">Resume Automation</button>
+            <button class="agent-btn btn-danger-outline" id="agentInterventionAbortBtn">Abort Task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

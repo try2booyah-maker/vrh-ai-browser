@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "VRH.AI",
+  "version": "2.0.0",
+  "description": "Your intelligent autonomous browser copilot — vision-grounded automation, DevTools Protocol control, and AI chat.",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https: http://localhost:* http://127.0.0.1:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com"
+  },
+  "permissions": [
+    "activeTab",
+    "debugger",
+    "downloads",
+    "scripting",
+    "sidePanel",
+    "storage",
+    "tabGroups",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "Open VRH.AI"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Toggle VRH.AI Side Panel"
+    }
+  }
+}

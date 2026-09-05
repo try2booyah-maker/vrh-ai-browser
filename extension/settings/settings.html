@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - VRH.AI</title>
+  <link rel="stylesheet" href="settings.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="../lib/sanitize.js"></script>
+</head>
+<body>
+  <div class="settings-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">VRH.AI</span>
+        <span class="sidebar-subtitle">Dashboard</span>
+      </div>
+      <nav>
+        <button class="nav-item active" data-section="providers">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+          Providers
+        </button>
+        <button class="nav-item" data-section="general">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          General
+        </button>
+        <button class="nav-item" data-section="features">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+          Features
+        </button>
+        <button class="nav-item" data-section="exclusions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          Exclusions
+        </button>
+        <button class="nav-item" data-section="data">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Data & Privacy
+        </button>
+        <button class="nav-item" data-section="about">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          About
+        </button>
+      </nav>
+    </aside>
+    
+    <main class="content">
+      <!-- ── SECTION: PROVIDERS ── -->
+      <section id="section-providers" class="settings-section">
+        <div class="section-header">
+          <h2>API & Providers</h2>
+          <p>Connect your AI inference engines and configure active models.</p>
+        </div>
+
+        <!-- ── PROVIDER 1: OPENROUTER ── -->
+        <div class="card" id="card-openrouter">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              <span style="font-weight: 600; font-size: 1rem;">OpenRouter Inference Provider</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="apiKey">OpenRouter API Key</label>
+              <div class="input-with-button">
+                <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                <button id="toggleVisibilityBtn" class="action-icon-btn" type="button" title="Toggle visibility">
+                  <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Model Access Pool</label>
+              <p class="form-desc">Add models to expose them in the side panel model selection.</p>
+              
+              <!-- Recommended Vision Models for OpenRouter -->
+              <div class="recommended-models-box" style="margin-bottom: 12px;">
+                <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">⚡ Recommended Vision Models (Browser-Use Agent)</div>
+                <div class="model-rec-chips" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <button type="button" class="rec-model-chip" data-id="google/gemini-2.0-flash-001" data-provider="openrouter">+ Gemini 2.0 Flash</button>
+                  <button type="button" class="rec-model-chip" data-id="anthropic/claude-3.5-sonnet" data-provider="openrouter">+ Claude 3.5 Sonnet</button>
+                  <button type="button" class="rec-model-chip" data-id="openai/gpt-4o" data-provider="openrouter">+ GPT-4o</button>
+                  <button type="button" class="rec-model-chip" data-id="qwen/qwen-2.5-vl-72b-instruct" data-provider="openrouter">+ Qwen 2.5 VL</button>
+                </div>
+              </div>
+
+              <div id="selectedModelsList" class="models-list">
+                <!-- Dynamically populated -->
+              </div>
+              
+              <div id="openrouterPicker" style="display: block;">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                  <input type="text" id="modelSearch" placeholder="🔍 Search models (e.g. gemma, claude, llama...)" style="flex: 1; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);">
+                  <button id="fetchModelsBtn" class="btn btn-secondary btn-sm" type="button">Fetch Models</button>
+                </div>
+                <div id="modelSearchResults" style="max-height: 200px; overflow-y: auto; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; display: none;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── OPENAI-COMPATIBLE PROVIDERS ── -->
+        <div style="margin: 36px 0 16px 0; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-color);">OpenAI-Compatible Providers</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Connect multiple endpoints (OpenAI, Groq, Ollama, LM Studio, vLLM). All selected models will appear together in the side panel.</p>
+          </div>
+        </div>
+
+        <div id="customProvidersContainer" style="display: flex; flex-direction: column; gap: 24px;">
+          <!-- Dynamically populated provider cards -->
+        </div>
+
+        <button type="button" id="addCustomProviderBtn" class="btn btn-secondary" style="margin-top: 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + Add Another OpenAI-Compatible Provider
+        </button>
+      </section>
+
+      <!-- ── SECTION: GENERAL ── -->
+      <section id="section-general" class="settings-section hidden">
+        <div class="section-header">
+          <h2>General Settings</h2>
+          <p>Configure interface options and extension behavior defaults.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label>Theme Mode</label>
+              <p class="form-desc">Choose a default visual skin for settings and the side panel.</p>
+              <div class="option-pills" id="themePills">
+                <button class="option-pill" data-theme-val="dark">Dark Mode 🌙</button>
+                <button class="option-pill" data-theme-val="light">Light Mode ☀️</button>
+                <button class="option-pill" data-theme-val="system">System 💻</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="defaultMode">Default Assistant Mode</label>
+              <p class="form-desc">The default operation tab selected when launching a new chat instance.</p>
+              <select id="defaultMode" class="custom-select">
+                <option value="ask">Ask Mode (Normal Streaming Chat)</option>
+                <option value="agent">Agent Mode (Autonomous Browser Actions)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION: FEATURES ── -->
+      <section id="section-features" class="settings-section hidden">
+        <div class="section-header">
+          <h2>Feature Controls</h2>
+          <p>Toggle and customize interactive copilot overlay properties.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">Text Selection Toolbar</span>
+                <span class="setting-description">Display the quick AI tool menu (Explain, Summarize, Translate, Rewrite) when highlighting text on webpages.</span>
+              </div>
+              <label class="switch-container">
+                <input type="checkbox" id="toolbarToggle" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">Auto Tab Context Sharing</span>
+                <span class="setting-description">Automatically read and share your active tab title and text context when sending prompts.</span>
+              </div>
+              <label class="switch-container">
+                <input type="checkbox" id="autoShareToggle" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">System Keyboards Shortcut</span>
+                <span class="setting-description">Configure the system-wide key combo (default Ctrl+Shift+Y) to summon the panel.</span>
+              </div>
+              <button id="shortcutBtn" class="btn btn-secondary btn-sm">Configure Shortcuts</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">Agent Cautious Mode 🛡️</span>
+                <span class="setting-description">Require explicit approval before the AI agent executes ANY browser action (click, type, navigate, etc.). When off, only sensitive actions prompt for confirmation.</span>
+              </div>
+              <label class="switch-container">
+                <input type="checkbox" id="cautiousModeToggle">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION: EXCLUSIONS ── -->
+      <section id="section-exclusions" class="settings-section hidden">
+        <div class="section-header">
+          <h2>Website Exclusions</h2>
+          <p>Blacklist specific sites where VRH.AI should not inject its content script or text toolbar.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label for="excludedSites">Restricted Domain Blacklist</label>
+              <p class="form-desc">Enter domain names (one per line, e.g., <code>bankofamerica.com</code> or <code>localhost</code>) to disable all overlays on those websites.</p>
+              <textarea id="excludedSites" rows="6" placeholder="github.com&#10;paypal.com&#10;internal.mycompany.net" class="custom-textarea"></textarea>
+              <button id="saveExclusionsBtn" class="btn btn-primary btn-sm" style="margin-top: 12px;">Save Blacklist</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION: DATA & PRIVACY ── -->
+      <section id="section-data" class="settings-section hidden">
+        <div class="section-header">
+          <h2>Data Management & Legal</h2>
+          <p>Control your storage footprints, back up conversation trees, and review legals.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">Export Settings & Histories</span>
+                <span class="setting-description">Download a local JSON backup of all configurations and chat conversation libraries.</span>
+              </div>
+              <button id="exportBtn" class="btn btn-secondary btn-sm">Export JSON</button>
+            </div>
+            <div style="padding: 4px 0 0 0; display: flex; align-items: center; gap: 8px;">
+              <label class="switch-container" style="margin:0;">
+                <input type="checkbox" id="includeApiKeyToggle">
+                <span class="switch-slider"></span>
+              </label>
+              <span style="font-size: 0.82rem; color: var(--text-muted);">Include API Key in export <span style="color:#ef4444;">(⚠️ sensitive)</span></span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title">Import Data from Backup</span>
+                <span class="setting-description">Restore settings, API tokens, and chat history logs from a local JSON file.</span>
+              </div>
+              <div class="upload-container">
+                <input type="file" id="importInput" accept=".json" class="hidden-input">
+                <button id="importBtn" class="btn btn-secondary btn-sm">Import JSON</button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-info">
+                <span class="setting-title" style="color:#ef4444;">Wipe All Data</span>
+                <span class="setting-description">Irreversibly delete all saved prompts, chat logs, API credentials, and reset settings to default.</span>
+              </div>
+              <button id="clearHistoryBtn" class="btn btn-danger btn-sm">Reset Extension</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <span>Legals & Guidelines</span>
+          </div>
+          <div class="card-body legal-links-card">
+            <p class="form-desc">VRH.AI is fully open-source and respects user storage privacy. Read our terms and data governance rules below.</p>
+            <div class="legal-links-row">
+              <a href="../legal/privacy.html" target="_blank" class="legal-link">Privacy Policy 🛡️</a>
+              <span class="bullet-spacer">•</span>
+              <a href="../legal/terms.html" target="_blank" class="legal-link">Terms & Conditions 📜</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!-- ── SECTION: ABOUT ── -->
+      <section id="section-about" class="settings-section hidden">
+        <div class="section-header">
+          <h2>About VRH.AI</h2>
+          <p>Product identity and open-source platform specifications.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body about-card">
+            <div class="about-logo">VRH.AI</div>
+            <div class="about-version">Version 1.0.1</div>
+            <p class="about-desc">An autonomous, open-source browser copilot that helps users summarize texts, write fluently, translate, and interact directly with browser tabs using local actions.</p>
+            <div class="divider"></div>
+            <div class="about-links">
+              <a href="https://github.com" target="_blank" class="help-link">GitHub Repository</a>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <!-- Onboarding Welcome Modal -->
+  <div id="onboardingModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header" style="margin-bottom: 12px;">
+        <span class="modal-logo">Welcome to VRH.AI Chrome Copilot! 🚀</span>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom: 16px;">Your workspace is now supercharged with a premium browser co-agent. Let's get you set up in under 60 seconds.</p>
+        
+        <div class="onboarding-steps" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="onboarding-step">
+            <span class="step-num">1</span>
+            <div class="step-text">
+              <strong>Summon the Sidebar Anytime</strong>
+              <p>Press <code>Ctrl + Shift + Y</code> or click the toolbar icon to toggle the side panel.</p>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <span class="step-num">2</span>
+            <div class="step-text">
+              <strong>Select Text on Pages</strong>
+              <p>Highlight text on any website to reveal the float toolbar (Explain, Summarize, Translate, Rewrite).</p>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <span class="step-num">3</span>
+            <div class="step-text">
+              <strong>Save Your API Credentials</strong>
+              <p>Paste your generic API Key in the Providers tab and manually add model names to your active selection pool to begin chatting.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top: 20px; display:flex; justify-content:flex-end;">
+        <button id="closeOnboardingBtn" class="btn btn-primary">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

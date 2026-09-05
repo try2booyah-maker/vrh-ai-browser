@@ -1,0 +1,19 @@
+{
+  "name": "ai-browser",
+  "version": "1.0.0",
+  "description": "VRH.AI is an open-source, autonomous browser copilot extension designed to help you ask questions, automate browser tasks, summarize text, translate languages, and improve writing—directly within Chrome.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer": "^25.3.0"
+  }
+}

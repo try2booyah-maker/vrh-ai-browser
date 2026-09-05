@@ -1,0 +1,43 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test screenshots and artifacts
+tests/*_test.png
+sidepanel_test.png
+settings_test.png
+*.png
+scratch/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

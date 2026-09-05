@@ -518,7 +518,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   else if (message.action === "GET_MARK_INFO") {
     try {
-      const markInfo = getMarkCoordinates(message.markId);
+      const id = message.markId ?? message.targetId ?? message.id;
+      const markInfo = getMarkCoordinates(id);
       sendResponse({ result: markInfo });
     } catch (err) {
       sendResponse({ error: err.toString() });
@@ -571,13 +572,58 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   else if (message.action === "CLICK_ELEMENT") {
     try {
-      const mark = somRegistry.get(parseInt(message.targetId, 10));
-      const el = mark ? mark.element : document.querySelector(`[data-vrh-id="${message.targetId}"]`);
+      const id = message.targetId ?? message.markId ?? message.id;
+      let el = null;
+      let mark = null;
+      const parsedId = parseInt(id, 10);
+      if (!isNaN(parsedId)) {
+        mark = somRegistry.get(parsedId);
+        if (mark) el = mark.element;
+      }
+      if (!el && id) {
+        el = document.querySelector(`[data-vrh-id="${id}"]`);
+      }
+      if (!el && typeof id === 'string') {
+        try {
+          el = document.getElementById(id) || document.querySelector(id);
+        } catch(e) {}
+      }
+
       if (el) {
-        el.click();
-        sendResponse({ result: "Clicked element." });
+        try {
+          el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+        } catch(e) {}
+
+        const rect = el.getBoundingClientRect();
+        const clientX = Math.round(rect.left + rect.width / 2);
+        const clientY = Math.round(rect.top + rect.height / 2);
+
+        const eventOpts = {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX,
+          clientY,
+          screenX: clientX,
+          screenY: clientY,
+          buttons: 1
+        };
+
+        try { el.dispatchEvent(new PointerEvent('pointerdown', eventOpts)); } catch(e) {}
+        try { el.dispatchEvent(new MouseEvent('mousedown', eventOpts)); } catch(e) {}
+        try { el.focus(); } catch(e) {}
+        try { el.dispatchEvent(new PointerEvent('pointerup', { ...eventOpts, buttons: 0 })); } catch(e) {}
+        try { el.dispatchEvent(new MouseEvent('mouseup', { ...eventOpts, buttons: 0 })); } catch(e) {}
+        try { el.click(); } catch(e) {}
+
+        sendResponse({
+          result: "Clicked element.",
+          x: clientX,
+          y: clientY,
+          tag: el.tagName.toLowerCase()
+        });
       } else {
-        sendResponse({ error: "Element not found" });
+        sendResponse({ error: `Element '${id}' not found.` });
       }
     } catch (e) {
       sendResponse({ error: e.toString() });
@@ -585,13 +631,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   else if (message.action === "TYPE_TEXT") {
     try {
-      const mark = somRegistry.get(parseInt(message.targetId, 10));
-      const el = mark ? mark.element : document.querySelector(`[data-vrh-id="${message.targetId}"]`);
+      const id = message.targetId ?? message.markId ?? message.id;
+      let el = null;
+      let mark = null;
+      const parsedId = parseInt(id, 10);
+      if (!isNaN(parsedId)) {
+        mark = somRegistry.get(parsedId);
+        if (mark) el = mark.element;
+      }
+      if (!el && id) {
+        el = document.querySelector(`[data-vrh-id="${id}"]`);
+      }
+      if (!el && typeof id === 'string') {
+        try {
+          el = document.getElementById(id) || document.querySelector(id);
+        } catch(e) {}
+      }
+
       if (!el) {
-        sendResponse({ error: "Element not found" });
+        sendResponse({ error: `Element '${id}' not found.` });
         return;
       }
-      el.focus();
+
+      try {
+        el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+      } catch(e) {}
+      try { el.focus(); } catch(e) {}
+
       const tagName = el.tagName.toLowerCase();
       let setter = null;
       if (tagName === 'input') {
@@ -599,11 +665,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else if (tagName === 'textarea') {
         setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
       }
-      if (setter) setter.call(el, message.text);
-      else el.value = message.text;
+
+      if (setter) {
+        setter.call(el, message.text);
+      } else {
+        el.value = message.text;
+      }
+
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
-      sendResponse({ result: "Typed text into element." });
+
+      const rect = el.getBoundingClientRect();
+      sendResponse({
+        result: "Typed text into element.",
+        x: Math.round(rect.left + rect.width / 2),
+        y: Math.round(rect.top + rect.height / 2)
+      });
     } catch (e) {
       sendResponse({ error: e.toString() });
     }

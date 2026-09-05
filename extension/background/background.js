@@ -169,6 +169,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     }
 
+    case "CDP_CLICK": {
+      const tabId = message.tabId;
+      cdpController.clickAt(tabId, message.x, message.y)
+        .then(() => sendResponse({ success: true }))
+        .catch((err) => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
+    case "CDP_TYPE": {
+      const tabId = message.tabId;
+      cdpController.typeText(tabId, message.x, message.y, message.text, message.pressEnter, message.clearFirst)
+        .then(() => sendResponse({ success: true }))
+        .catch((err) => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
+    case "CDP_SCROLL": {
+      const tabId = message.tabId;
+      const deltaY = message.direction === 'up' ? -600 : 600;
+      cdpController.scroll(tabId, 500, 400, deltaY)
+        .then(() => sendResponse({ success: true }))
+        .catch((err) => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
     default:
       break;
   }

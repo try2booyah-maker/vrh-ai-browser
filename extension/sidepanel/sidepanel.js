@@ -742,8 +742,8 @@ const initSidepanelApp = async () => {
     { cmd: '/summarize', desc: 'Summarize current page', tab: 'summarize' },
     { cmd: '/write', desc: 'Open writing tools', tab: 'write' },
     { cmd: '/translate', desc: 'Open translate tool', tab: 'translate' },
-    { cmd: '/agent', desc: 'Switch to Agent mode', action: () => { modeSelect.value = 'agent'; modeSelect.dispatchEvent(new Event('change')); } },
-    { cmd: '/ask', desc: 'Switch to Ask mode', action: () => { modeSelect.value = 'ask'; modeSelect.dispatchEvent(new Event('change')); } },
+    { cmd: '/agent', desc: 'Switch to Agent mode', action: () => { modeSelect.value = 'agent'; modeSelect.dispatchEvent(new Event('change')); switchTab('chat'); } },
+    { cmd: '/ask', desc: 'Switch to Ask mode', action: () => { modeSelect.value = 'ask'; modeSelect.dispatchEvent(new Event('change')); switchTab('chat'); } },
   ];
 
   function handleSlashCommands(val) {
@@ -1881,7 +1881,7 @@ const initSidepanelApp = async () => {
             1. Analyze the user's request and check the interactable elements.
             2. Choose the most logical next action. You can click elements, type text, scroll the page, or navigate to a new URL.
             3. Execute the action by calling the corresponding tool.
-            4. If you have completed the task or if you need to ask the user for information, write a normal text response.
+            4. You have FULL AUTONOMY to interact with the webpage. DO NOT ask the user to click or wait for the user to perform actions. You MUST execute the clicks directly yourself via tools.
             5. ONLY call one tool at a time.
             6. When you are finished with the actions, provide a concise summary of what you did and describe what is on the current page to the user.
             7. NEVER navigate to a different website domain unless the user explicitly asked you to.
@@ -1987,21 +1987,85 @@ const initSidepanelApp = async () => {
               // Safety gates and restrictions removed. Agent is fully autonomous.
 
               let res = '';
+              const targetId = args.targetId ?? args.mark_id ?? args.id;
+              let tab;
+              if (selectedTabId) tab = await chrome.tabs.get(selectedTabId).catch(() => null);
+              if (!tab) { const [a] = await chrome.tabs.query({ active: true, currentWindow: true }); tab = a; }
+              const tabId = tab?.id;
+
               if (cmdAction === 'click_element') {
-                await executeOnTab('HIGHLIGHT_ELEMENT', null, null, null, null, null, args.targetId);
-                await new Promise(w => setTimeout(w, 650));
-                const r = await executeOnTab('CLICK_ELEMENT', null, null, null, null, null, args.targetId);
-                res = r.result || r.error;
+                // 1. Obtain coordinates from content script
+                let coords = null;
+                try {
+                  const markRes = await executeOnTab('GET_MARK_INFO', null, null, null, null, null, targetId);
+                  coords = markRes?.result;
+                } catch(e) {}
+
+                // 2. Hardware click via CDP for authentic isTrusted: true input
+                let cdpSucceeded = false;
+                if (tabId && coords && typeof coords.x === 'number' && typeof coords.y === 'number') {
+                  try {
+                    const cdpRes = await chrome.runtime.sendMessage({
+                      action: "CDP_CLICK",
+                      tabId,
+                      x: coords.x,
+                      y: coords.y
+                    });
+                    if (cdpRes && cdpRes.success) cdpSucceeded = true;
+                  } catch (cdpErr) {
+                    console.warn("[VRH.AI Agent] CDP click warning:", cdpErr);
+                  }
+                }
+
+                // 3. Fallback and complementary DOM click event cascade
+                const r = await executeOnTab('CLICK_ELEMENT', null, null, null, null, null, targetId);
+                res = r.result || (cdpSucceeded ? "Clicked element via hardware mouse." : r.error || "Clicked element.");
+                
+                // Allow network & page DOM to settle
+                await new Promise(w => setTimeout(w, 400));
               }
               else if (cmdAction === 'type_text') {
-                await executeOnTab('HIGHLIGHT_ELEMENT', null, null, null, null, null, args.targetId);
-                await new Promise(w => setTimeout(w, 650));
-                const r = await executeOnTab('TYPE_TEXT', null, args.text, null, null, null, args.targetId);
-                res = r.result || r.error;
+                let coords = null;
+                try {
+                  const markRes = await executeOnTab('GET_MARK_INFO', null, null, null, null, null, targetId);
+                  coords = markRes?.result;
+                } catch(e) {}
+
+                let cdpSucceeded = false;
+                if (tabId && coords && typeof coords.x === 'number' && typeof coords.y === 'number') {
+                  try {
+                    const cdpRes = await chrome.runtime.sendMessage({
+                      action: "CDP_TYPE",
+                      tabId,
+                      x: coords.x,
+                      y: coords.y,
+                      text: args.text || '',
+                      pressEnter: Boolean(args.pressEnter || args.press_enter)
+                    });
+                    if (cdpRes && cdpRes.success) cdpSucceeded = true;
+                  } catch (cdpErr) {
+                    console.warn("[VRH.AI Agent] CDP typing warning:", cdpErr);
+                  }
+                }
+
+                const r = await executeOnTab('TYPE_TEXT', null, args.text, null, null, null, targetId);
+                res = r.result || (cdpSucceeded ? "Typed text via hardware keyboard." : r.error || "Typed text.");
+                await new Promise(w => setTimeout(w, 250));
               }
               else if (cmdAction === 'scroll_page') {
-                const r = await executeOnTab('SCROLL', null, null, args.direction);
-                res = r.result || r.error;
+                const direction = args.direction || 'down';
+                if (tabId) {
+                  try {
+                    await chrome.runtime.sendMessage({
+                      action: "CDP_SCROLL",
+                      tabId,
+                      direction
+                    });
+                  } catch(e) {}
+                }
+                const r = await executeOnTab('SCROLL', null, null, direction);
+                res = r.result || r.error || `Scrolled ${direction}.`;
+                await new Promise(w => setTimeout(w, 250));
               }
               else if (cmdAction === 'navigate') {
                 try {

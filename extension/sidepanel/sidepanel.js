@@ -23,15 +23,6 @@ const initSidepanelApp = async () => {
   // Tool elements
   const summarizeBtn = document.getElementById('summarizeBtn');
   const summarizeOutput = document.getElementById('summarizeOutput');
-  const writeBtn = document.getElementById('writeBtn');
-  const writeInput = document.getElementById('writeInput');
-  const writeOutput = document.getElementById('writeOutput');
-  const translateBtn = document.getElementById('translateBtn');
-  const translateInput = document.getElementById('translateInput');
-  const translateOutput = document.getElementById('translateOutput');
-  const swapLangs = document.getElementById('swapLangs');
-  const sourceLang = document.getElementById('sourceLang');
-  const targetLang = document.getElementById('targetLang');
 
   // ── CUSTOM SELECT DROPDOWN WRAPPER ──
   function setupCustomDropdown(selectId) {
@@ -740,8 +731,8 @@ const initSidepanelApp = async () => {
   // ── Slash Commands ──
   const slashCommands = [
     { cmd: '/summarize', desc: 'Summarize current page', tab: 'summarize' },
-    { cmd: '/write', desc: 'Open writing tools', tab: 'write' },
-    { cmd: '/translate', desc: 'Open translate tool', tab: 'translate' },
+    { cmd: '/write', desc: 'Compose or rewrite text in chat', action: () => { switchTab('chat'); chatInput.value = 'Write: '; chatInput.focus(); } },
+    { cmd: '/translate', desc: 'Translate text in chat', action: () => { switchTab('chat'); chatInput.value = 'Translate into English: '; chatInput.focus(); } },
     { cmd: '/agent', desc: 'Switch to Agent mode', action: () => { modeSelect.value = 'agent'; modeSelect.dispatchEvent(new Event('change')); switchTab('chat'); } },
     { cmd: '/ask', desc: 'Switch to Ask mode', action: () => { modeSelect.value = 'ask'; modeSelect.dispatchEvent(new Event('change')); switchTab('chat'); } },
   ];
@@ -2102,84 +2093,6 @@ const initSidepanelApp = async () => {
     summarizeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Summarize Current Page';
   });
 
-  // ── WRITE TOOL ──
-  writeBtn.addEventListener('click', async () => {
-    const input = writeInput.value.trim();
-    if (!input) return;
-    const mode = document.querySelector('[data-write-mode].active')?.dataset.writeMode || 'compose';
-    const tone = document.querySelector('[data-tone].active')?.dataset.tone || 'professional';
-
-    writeBtn.disabled = true;
-    writeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> Generating...';
-    writeOutput.classList.remove('visible');
-
-    const modePrompts = {
-      compose: `Write content based on this description. Tone: ${tone}. Output only the written content.`,
-      rewrite: `Rewrite the following text to make it better. Tone: ${tone}. Output only the rewritten text.`,
-      grammar: 'Fix all grammar, spelling, and punctuation errors in the following text. Output only the corrected text.'
-    };
-
-    try {
-      const reply = await callLLMStream([
-        { role: 'system', content: `You are VRH.AI, a writing assistant. ${modePrompts[mode]}` },
-        { role: 'user', content: input }
-      ], (partialText) => {
-        writeOutput.innerHTML = formatMarkdown(partialText);
-        writeOutput.classList.add('visible');
-      });
-      writeOutput.innerHTML = formatMarkdown(reply);
-      writeOutput.appendChild(createOutputActions(reply));
-      writeOutput.classList.add('visible');
-    } catch(err) {
-      writeOutput.innerHTML = `<span style="color:#ef4444;">Error: ${escapeHtml(err.message)}</span>`;
-      writeOutput.classList.add('visible');
-    }
-
-    writeBtn.disabled = false;
-    writeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Generate';
-  });
-
-  // ── TRANSLATE TOOL ──
-  translateBtn.addEventListener('click', async () => {
-    const input = translateInput.value.trim();
-    if (!input) return;
-    const src = sourceLang.value;
-    const tgt = targetLang.value;
-
-    translateBtn.disabled = true;
-    translateBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> Translating...';
-    translateOutput.classList.remove('visible');
-
-    const srcPrompt = src === 'auto' ? 'Auto-detect the source language' : `Source language: ${src}`;
-
-    try {
-      const reply = await callLLMStream([
-        { role: 'system', content: `You are VRH.AI, a translation assistant. ${srcPrompt}. Translate the following text to ${tgt}. Output ONLY the translated text, nothing else.` },
-        { role: 'user', content: input }
-      ], (partialText) => {
-        translateOutput.innerHTML = formatMarkdown(partialText);
-        translateOutput.classList.add('visible');
-      });
-      translateOutput.innerHTML = formatMarkdown(reply);
-      translateOutput.appendChild(createOutputActions(reply));
-      translateOutput.classList.add('visible');
-    } catch(err) {
-      translateOutput.innerHTML = `<span style="color:#ef4444;">Error: ${escapeHtml(err.message)}</span>`;
-      translateOutput.classList.add('visible');
-    }
-
-    translateBtn.disabled = false;
-    translateBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Translate';
-  });
-
-  swapLangs.addEventListener('click', () => {
-    if (sourceLang.value !== 'auto') {
-      const tmp = sourceLang.value;
-      sourceLang.value = targetLang.value;
-      targetLang.value = tmp;
-    }
-  });
-
   // ── OUTPUT ACTIONS ──
   function createOutputActions(text) {
     const container = document.createElement('div');
@@ -2219,18 +2132,17 @@ const initSidepanelApp = async () => {
         chatInput.value = `Summarize the following text concisely:\n\n"${text}"`;
         handleSendMessage();
       } else if (action === 'translate') {
-        switchTab('translate');
-        if (translateInput) {
-          translateInput.value = text;
-          if (translateBtn) translateBtn.click();
-        }
+        switchTab('chat');
+        modeSelect.value = 'ask';
+        modeSelect.dispatchEvent(new Event('change'));
+        chatInput.value = `Translate the following text into English:\n\n"${text}"`;
+        handleSendMessage();
       } else if (action === 'rewrite') {
-        switchTab('write');
-        if (writeInput) {
-          writeInput.value = text;
-          document.querySelectorAll('[data-write-mode]').forEach(p => p.classList.toggle('active', p.dataset.writeMode === 'rewrite'));
-          writeInput.focus();
-        }
+        switchTab('chat');
+        modeSelect.value = 'ask';
+        modeSelect.dispatchEvent(new Event('change'));
+        chatInput.value = `Rewrite and improve the following text:\n\n"${text}"`;
+        handleSendMessage();
       }
     }
   });
@@ -2254,18 +2166,17 @@ const initSidepanelApp = async () => {
             chatInput.value = `Summarize the following text concisely:\n\n"${text}"`;
             handleSendMessage();
           } else if (action === 'translate') {
-            switchTab('translate');
-            if (translateInput) {
-              translateInput.value = text;
-              if (translateBtn) translateBtn.click();
-            }
+            switchTab('chat');
+            modeSelect.value = 'ask';
+            modeSelect.dispatchEvent(new Event('change'));
+            chatInput.value = `Translate the following text into English:\n\n"${text}"`;
+            handleSendMessage();
           } else if (action === 'rewrite') {
-            switchTab('write');
-            if (writeInput) {
-              writeInput.value = text;
-              document.querySelectorAll('[data-write-mode]').forEach(p => p.classList.toggle('active', p.dataset.writeMode === 'rewrite'));
-              writeInput.focus();
-            }
+            switchTab('chat');
+            modeSelect.value = 'ask';
+            modeSelect.dispatchEvent(new Event('change'));
+            chatInput.value = `Rewrite and improve the following text:\n\n"${text}"`;
+            handleSendMessage();
           }
         }
         chrome.storage.session.remove('pendingSelectionAction');

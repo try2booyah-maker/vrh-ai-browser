@@ -7,6 +7,7 @@ const assert = require('node:assert');
 describe('Slash Commands Matching & Parsing (Phase 4.1)', () => {
   let modeValue = 'ask';
   let switchedTab = null;
+  let chatPromptValue = '';
 
   function switchTab(tab) {
     switchedTab = tab;
@@ -14,10 +15,10 @@ describe('Slash Commands Matching & Parsing (Phase 4.1)', () => {
 
   const slashCommands = [
     { cmd: '/summarize', desc: 'Summarize current page', tab: 'summarize' },
-    { cmd: '/write', desc: 'Open writing tools', tab: 'write' },
-    { cmd: '/translate', desc: 'Open translate tool', tab: 'translate' },
-    { cmd: '/agent', desc: 'Switch to Agent mode', action: () => { modeValue = 'agent'; } },
-    { cmd: '/ask', desc: 'Switch to Ask mode', action: () => { modeValue = 'ask'; } },
+    { cmd: '/write', desc: 'Compose or rewrite text in chat', action: () => { switchTab('chat'); chatPromptValue = 'Write: '; } },
+    { cmd: '/translate', desc: 'Translate text in chat', action: () => { switchTab('chat'); chatPromptValue = 'Translate into English: '; } },
+    { cmd: '/agent', desc: 'Switch to Agent mode', action: () => { modeValue = 'agent'; switchTab('chat'); } },
+    { cmd: '/ask', desc: 'Switch to Ask mode', action: () => { modeValue = 'ask'; switchTab('chat'); } },
   ];
 
   function getMatchingSlashCommands(val) {
@@ -63,16 +64,24 @@ describe('Slash Commands Matching & Parsing (Phase 4.1)', () => {
     assert.deepStrictEqual(getMatchingSlashCommands('/thiscommandiswaytoolongtoqualify'), []);
   });
 
-  it('should execute tab switching for /summarize, /write, and /translate', () => {
+  it('should execute tab switching for /summarize', () => {
     switchedTab = null;
     assert.strictEqual(executeSlashCommand('/summarize'), true);
     assert.strictEqual(switchedTab, 'summarize');
+  });
 
+  it('should execute direct chat actions for /write and /translate', () => {
+    chatPromptValue = '';
+    switchedTab = null;
     assert.strictEqual(executeSlashCommand('/write'), true);
-    assert.strictEqual(switchedTab, 'write');
+    assert.strictEqual(switchedTab, 'chat');
+    assert.strictEqual(chatPromptValue, 'Write: ');
 
+    chatPromptValue = '';
+    switchedTab = null;
     assert.strictEqual(executeSlashCommand('/translate'), true);
-    assert.strictEqual(switchedTab, 'translate');
+    assert.strictEqual(switchedTab, 'chat');
+    assert.strictEqual(chatPromptValue, 'Translate into English: ');
   });
 
   it('should execute action callbacks for /agent and /ask', () => {

@@ -43,14 +43,6 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Summarize
       </button>
-      <button class="tab-item" data-tab="write">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Write
-      </button>
-      <button class="tab-item" data-tab="translate">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
-        Translate
-      </button>
       <div class="tab-indicator"></div>
     </nav>
 
@@ -167,98 +159,6 @@
         </button>
 
         <div id="summarizeOutput" class="tool-output"></div>
-      </div>
-    </div>
-
-    <!-- ═══ WRITE VIEW ═══ -->
-    <div class="view-panel" id="view-write">
-      <div class="tool-panel">
-        <div class="tool-header">
-          <h2 class="tool-title">✍️ Writing Tools</h2>
-          <p class="tool-desc">Compose, rewrite, or improve any text</p>
-        </div>
-
-        <div class="tool-options">
-          <label class="tool-label">Mode</label>
-          <div class="option-pills">
-            <button class="option-pill active" data-write-mode="compose">Compose</button>
-            <button class="option-pill" data-write-mode="rewrite">Rewrite</button>
-            <button class="option-pill" data-write-mode="grammar">Fix Grammar</button>
-          </div>
-        </div>
-
-        <div class="tool-options" id="toneOptions">
-          <label class="tool-label">Tone</label>
-          <div class="option-pills">
-            <button class="option-pill active" data-tone="professional">Professional</button>
-            <button class="option-pill" data-tone="casual">Casual</button>
-            <button class="option-pill" data-tone="friendly">Friendly</button>
-            <button class="option-pill" data-tone="formal">Formal</button>
-          </div>
-        </div>
-
-        <textarea id="writeInput" class="tool-textarea" placeholder="Enter your text or describe what to write..." rows="5"></textarea>
-
-        <button class="action-btn-large" id="writeBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Generate
-        </button>
-
-        <div id="writeOutput" class="tool-output"></div>
-      </div>
-    </div>
-
-    <!-- ═══ TRANSLATE VIEW ═══ -->
-    <div class="view-panel" id="view-translate">
-      <div class="tool-panel">
-        <div class="tool-header">
-          <h2 class="tool-title">🌐 Translate</h2>
-          <p class="tool-desc">Translate text between any languages</p>
-        </div>
-
-        <div class="translate-langs">
-          <select id="sourceLang" class="lang-select">
-            <option value="auto">Auto Detect</option>
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
-            <option value="Chinese">Chinese</option>
-            <option value="Japanese">Japanese</option>
-            <option value="Korean">Korean</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Arabic">Arabic</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Russian">Russian</option>
-            <option value="Tamil">Tamil</option>
-            <option value="Telugu">Telugu</option>
-          </select>
-          <button class="swap-btn" id="swapLangs" title="Swap languages">⇄</button>
-          <select id="targetLang" class="lang-select">
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
-            <option value="Chinese">Chinese</option>
-            <option value="Japanese">Japanese</option>
-            <option value="Korean">Korean</option>
-            <option value="Hindi" selected>Hindi</option>
-            <option value="Arabic">Arabic</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Russian">Russian</option>
-            <option value="Tamil">Tamil</option>
-            <option value="Telugu">Telugu</option>
-          </select>
-        </div>
-
-        <textarea id="translateInput" class="tool-textarea" placeholder="Enter text to translate..." rows="5"></textarea>
-
-        <button class="action-btn-large" id="translateBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Translate
-        </button>
-
-        <div id="translateOutput" class="tool-output"></div>
       </div>
     </div>
 

@@ -237,6 +237,26 @@ export class AgentRunner {
   }
 
   /**
+   * Send message to target tab with automatic content script dynamic injection fallback.
+   */
+  async _sendMessageToTab(tabId, message) {
+    try {
+      return await chrome.tabs.sendMessage(tabId, message);
+    } catch (err) {
+      if (err?.message?.includes("Receiving end does not exist") || err?.message?.includes("Could not establish connection")) {
+        console.log(`[AgentRunner] Content script not present in tab ${tabId}. Dynamically injecting...`);
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ["content/content.js"]
+        }).catch(() => null);
+        await new Promise(r => setTimeout(r, 350));
+        return await chrome.tabs.sendMessage(tabId, message).catch(() => null);
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Start autonomous agent task.
    * @param {string} goal
    * @param {number} [targetTabId]
@@ -653,7 +673,7 @@ export class AgentRunner {
         if (!tab) throw new Error("Target tab was closed.");
 
         // Sweep annoyances and scan DOM/Shadow roots
-        const somRes = await chrome.tabs.sendMessage(this.activeTabId, { action: "INJECT_SET_OF_MARKS" });
+        const somRes = await this._sendMessageToTab(this.activeTabId, { action: "INJECT_SET_OF_MARKS" });
         if (!somRes || !somRes.result) {
           throw new Error("Failed to scan interactive elements on page.");
         }
@@ -864,7 +884,7 @@ ${annotatedScreenshotUrl ? 'Analyze the screenshot visual grounding labels [1], 
     switch (name) {
       case "click_element": {
         const markId = args.mark_id;
-        const markRes = await chrome.tabs.sendMessage(this.activeTabId, { action: "GET_MARK_INFO", markId });
+        const markRes = await this._sendMessageToTab(this.activeTabId, { action: "GET_MARK_INFO", markId });
         const mark = markRes?.result;
         if (!mark) throw new Error(`Element with mark_id [${markId}] not found in viewport.`);
 
@@ -881,7 +901,7 @@ ${annotatedScreenshotUrl ? 'Analyze the screenshot visual grounding labels [1], 
 
       case "type_text": {
         const markId = args.mark_id;
-        const markRes = await chrome.tabs.sendMessage(this.activeTabId, { action: "GET_MARK_INFO", markId });
+        const markRes = await this._sendMessageToTab(this.activeTabId, { action: "GET_MARK_INFO", markId });
         const mark = markRes?.result;
         const x = mark ? mark.x : 0;
         const y = mark ? mark.y : 0;

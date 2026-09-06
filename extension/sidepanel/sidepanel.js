@@ -1994,10 +1994,15 @@ const initSidepanelApp = async () => {
 
         let targetTab;
         if (selectedTabId) targetTab = await chrome.tabs.get(selectedTabId).catch(() => null);
-        if (!targetTab) { const [a] = await chrome.tabs.query({ active: true, currentWindow: true }); targetTab = a; }
+        if (!targetTab || (targetTab.url && (targetTab.url.startsWith('chrome-extension://') || targetTab.url.startsWith('chrome://')))) {
+          const tabs = await chrome.tabs.query({ currentWindow: true });
+          targetTab = tabs.find(t => t.active && t.url && (t.url.startsWith('http://') || t.url.startsWith('https://'))) ||
+                      tabs.find(t => t.url && (t.url.startsWith('http://') || t.url.startsWith('https://')));
+        }
 
         const url = (targetTab?.url || '').toLowerCase();
         if (
+          !url ||
           url.startsWith('chrome://') ||
           url.startsWith('chrome-extension://') ||
           url.startsWith('edge://') ||

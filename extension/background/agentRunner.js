@@ -256,10 +256,19 @@ export class AgentRunner {
       tab = await chrome.tabs.get(targetTabId).catch(() => null);
     }
     if (!tab) {
-      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      tab = activeTab;
+      const tabs = await chrome.tabs.query({ currentWindow: true });
+      tab = tabs.find(t => t.active && t.url && (t.url.startsWith('http://') || t.url.startsWith('https://'))) ||
+            tabs.find(t => t.url && (t.url.startsWith('http://') || t.url.startsWith('https://')));
+      
+      if (!tab) {
+        // If only extension or internal page is open, launch a new web tab for the agent
+        tab = await chrome.tabs.create({ url: 'https://www.google.com', active: false }).catch(() => null);
+        if (tab && tab.id) {
+          await new Promise(r => setTimeout(r, 800));
+        }
+      }
     }
-    if (!tab || !tab.id) throw new Error("No active browser tab found.");
+    if (!tab || !tab.id) throw new Error("No available browser tab found to automate.");
 
     // Check for browser-restricted internal URLs
     const url = (tab.url || '').toLowerCase();
@@ -657,6 +666,24 @@ export class AgentRunner {
           this.pause("Security challenge (CAPTCHA / 2FA) detected on page. Please solve it and click Resume.");
           return;
         }
+
+        // Visual action verification: check if DOM or URL changed since previous step
+        let verificationNotice = "";
+        const currentPageState = {
+          url: tab.url,
+          title: tab.title,
+          manifestCount: manifest.length,
+          topMarkIds: manifest.slice(0, 5).map(m => `${m.id}:${m.tag}`).join('|')
+        };
+        if (this.lastPageState && this.currentStep > 1) {
+          const urlChanged = this.lastPageState.url !== currentPageState.url;
+          const domChanged = this.lastPageState.manifestCount !== currentPageState.manifestCount ||
+                             this.lastPageState.topMarkIds !== currentPageState.topMarkIds;
+          if (!urlChanged && !domChanged) {
+            verificationNotice = "\n\n[STATE-DIFF VERIFICATION WARNING]: Page URL and interactive elements did not change after previous action. The element might need a different interaction, scroll, or may still be loading.";
+          }
+        }
+        this.lastPageState = currentPageState;
 
         // ── 3. REASONING: CALL MULTIMODAL OR TEXT LLM ──
         this._broadcastUpdate('thinking');

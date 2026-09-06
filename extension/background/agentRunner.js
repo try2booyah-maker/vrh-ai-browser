@@ -224,6 +224,7 @@ export class AgentRunner {
       elapsedSeconds,
       tokensEstimated: this.totalTokensEstimated,
       screenshot: this.latestScreenshot,
+      runLogs: [...this.runLogs],
       ...extra
     };
 
@@ -250,13 +251,32 @@ export class AgentRunner {
     if (!this.taskGoal) throw new Error("Please enter a goal for the agent.");
 
     // Determine target tab
+    let tab = null;
     if (targetTabId) {
-      this.activeTabId = targetTabId;
-    } else {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || !tab.id) throw new Error("No active browser tab found.");
-      this.activeTabId = tab.id;
+      tab = await chrome.tabs.get(targetTabId).catch(() => null);
     }
+    if (!tab) {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      tab = activeTab;
+    }
+    if (!tab || !tab.id) throw new Error("No active browser tab found.");
+
+    // Check for browser-restricted internal URLs
+    const url = (tab.url || '').toLowerCase();
+    if (
+      url.startsWith('chrome://') ||
+      url.startsWith('chrome-extension://') ||
+      url.startsWith('edge://') ||
+      url.startsWith('about:') ||
+      url.startsWith('view-source:') ||
+      url.startsWith('devtools://') ||
+      url.includes('chromewebstore.google.com') ||
+      url.includes('chrome.google.com/webstore')
+    ) {
+      throw new Error("Cannot automate browser system pages (chrome://, Chrome Web Store). Please open a standard webpage (e.g. google.com, wikipedia.org) to run VRH.AI agent.");
+    }
+
+    this.activeTabId = tab.id;
 
     this.status = 'running';
     this.currentStep = 0;
@@ -638,39 +658,24 @@ export class AgentRunner {
           return;
         }
 
-        // Capture clean viewport screenshot
-        const cleanScreenshotUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 75 });
-
-        // Annotate screenshot exclusively on background OffscreenCanvas
-        const annotatedScreenshotUrl = await this._annotateScreenshotWithMarks(cleanScreenshotUrl, manifest, viewport);
-        this.latestScreenshot = annotatedScreenshotUrl;
-
-        // Current page state signature for verification
-        const currentStateSignature = {
-          url: tab.url,
-          title: tab.title,
-          manifestCount: manifest.length,
-          topMarkIds: manifest.slice(0, 10).map(m => `${m.mark_id}:${m.name || m.placeholder || ''}`).join('|')
-        };
-
-        // ── 2. VISUAL ACTION VERIFICATION (STATE DIFFING) ──
-        let verificationNotice = "";
-        if (this.lastPageState && this.recentActions.length > 0) {
-          const lastAction = this.recentActions[this.recentActions.length - 1];
-          const urlChanged = currentStateSignature.url !== this.lastPageState.url;
-          const domChanged = currentStateSignature.manifestCount !== this.lastPageState.manifestCount ||
-                             currentStateSignature.topMarkIds !== this.lastPageState.topMarkIds;
-
-          if (!urlChanged && !domChanged && !lastAction.includes('scroll') && !lastAction.includes('extract_data')) {
-            verificationNotice = `\n\n[VERIFICATION WARNING]: Previous action produced no detectable visual or DOM change on the page. The target element may be disabled, occluded by an overlay, or non-reactive. Consider scrolling, sweeping overlays, or selecting an alternate element.`;
-          }
-        }
-        this.lastPageState = currentStateSignature;
-
-        // ── 3. REASONING: CALL MULTIMODAL LLM ──
+        // ── 3. REASONING: CALL MULTIMODAL OR TEXT LLM ──
         this._broadcastUpdate('thinking');
 
         const { endpoint, headers, model } = await this._getInferenceConfig();
+        const supportsVision = typeof globalThis.isVisionModel === 'function' ? globalThis.isVisionModel(model) : true;
+
+        let annotatedScreenshotUrl = null;
+        if (supportsVision) {
+          try {
+            // Capture clean viewport screenshot
+            const cleanScreenshotUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 75 });
+            // Annotate screenshot exclusively on background OffscreenCanvas
+            annotatedScreenshotUrl = await this._annotateScreenshotWithMarks(cleanScreenshotUrl, manifest, viewport);
+            this.latestScreenshot = annotatedScreenshotUrl;
+          } catch (shotErr) {
+            console.warn("[AgentRunner] Viewport screenshot capture failed, continuing with text DOM:", shotErr);
+          }
+        }
 
         // Build observation prompt with token-efficient manifest
         const stepPrompt = `Task Objective: "${this.taskGoal}"
@@ -681,15 +686,23 @@ Page Title: "${tab.title}"
 Visible Interactive Elements:
 ${JSON.stringify(manifest, null, 2)}${verificationNotice}
 
-Analyze the screenshot visual grounding labels [1], [2], [3]... and the element manifest above. Formulate your reasoning and select the best next tool to execute.`;
+${annotatedScreenshotUrl ? 'Analyze the screenshot visual grounding labels [1], [2], [3]... and the element manifest above. Formulate your reasoning and select the best next tool to execute.' : 'Analyze the interactive elements manifest above. Formulate your reasoning and select the best next tool to execute.'}`;
 
-        const userMessage = {
-          role: "user",
-          content: [
-            { type: "text", text: stepPrompt },
-            { type: "image_url", image_url: { url: annotatedScreenshotUrl } }
-          ]
-        };
+        let userMessage;
+        if (annotatedScreenshotUrl) {
+          userMessage = {
+            role: "user",
+            content: [
+              { type: "text", text: stepPrompt },
+              { type: "image_url", image_url: { url: annotatedScreenshotUrl } }
+            ]
+          };
+        } else {
+          userMessage = {
+            role: "user",
+            content: stepPrompt
+          };
+        }
 
         // Context pruning: strip older base64 screenshots to save tokens and reduce latency
         this._pruneMultimodalContext();
@@ -772,6 +785,7 @@ Analyze the screenshot visual grounding labels [1], [2], [3]... and the element 
         this.runLogs.push(logEntry);
 
         const actionResult = await this._executeTool(toolCall);
+        logEntry.result = actionResult;
 
         this.messages.push({
           role: "tool",

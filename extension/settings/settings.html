@@ -92,10 +92,12 @@
               </div>
               
               <div id="openrouterPicker" style="display: block;">
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
                   <input type="text" id="modelSearch" placeholder="🔍 Search models (e.g. gemma, claude, llama...)" style="flex: 1; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);">
+                  <button id="testOpenRouterBtn" class="btn btn-secondary btn-sm" type="button" title="Test endpoint and API key latency">⚡ Test</button>
                   <button id="fetchModelsBtn" class="btn btn-secondary btn-sm" type="button">Fetch Models</button>
                 </div>
+                <div id="openRouterTestStatus" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; display: none;"></div>
                 <div id="modelSearchResults" style="max-height: 200px; overflow-y: auto; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; display: none;"></div>
               </div>
             </div>

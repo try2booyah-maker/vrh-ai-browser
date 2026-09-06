@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const apiKeyInput = document.getElementById('apiKey');
   const toggleVisibilityBtn = document.getElementById('toggleVisibilityBtn');
   const fetchModelsBtn = document.getElementById('fetchModelsBtn');
+  const testOpenRouterBtn = document.getElementById('testOpenRouterBtn');
+  const openRouterTestStatus = document.getElementById('openRouterTestStatus');
   const modelSearch = document.getElementById('modelSearch'); // OpenRouter search input
   const modelSearchResults = document.getElementById('modelSearchResults');
   const openrouterPicker = document.getElementById('openrouterPicker');
@@ -226,6 +228,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // OpenRouter: Test Connection
+  if (testOpenRouterBtn) {
+    testOpenRouterBtn.addEventListener('click', async () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        if (openRouterTestStatus) {
+          openRouterTestStatus.style.display = 'block';
+          openRouterTestStatus.style.color = '#ef4444';
+          openRouterTestStatus.textContent = '⚠️ Enter OpenRouter API Key first.';
+        }
+        showToast('❌ Enter your OpenRouter API Key first.');
+        return;
+      }
+      testOpenRouterBtn.textContent = '⚡ Testing...';
+      testOpenRouterBtn.disabled = true;
+      if (openRouterTestStatus) {
+        openRouterTestStatus.style.display = 'block';
+        openRouterTestStatus.style.color = 'var(--text-muted)';
+        openRouterTestStatus.textContent = 'Testing connection to OpenRouter...';
+      }
+      const start = performance.now();
+      try {
+        const res = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${key}`,
+            'HTTP-Referer': 'https://vrh.ai',
+            'X-Title': 'VRH.AI Chrome Copilot'
+          }
+        });
+        const latency = Math.round(performance.now() - start);
+        if (res.ok) {
+          if (openRouterTestStatus) {
+            openRouterTestStatus.style.color = '#22c55e';
+            openRouterTestStatus.textContent = `✅ Connected successfully (${latency}ms)`;
+          }
+          showToast(`✅ OpenRouter connected (${latency}ms)`);
+        } else {
+          if (openRouterTestStatus) {
+            openRouterTestStatus.style.color = '#ef4444';
+            openRouterTestStatus.textContent = `❌ Server responded with HTTP ${res.status}`;
+          }
+          showToast(`❌ OpenRouter HTTP ${res.status}`);
+        }
+      } catch (err) {
+        if (openRouterTestStatus) {
+          openRouterTestStatus.style.color = '#ef4444';
+          openRouterTestStatus.textContent = `❌ Connection failed: ${err.message}`;
+        }
+        showToast(`❌ Connection failed: ${err.message}`);
+      } finally {
+        testOpenRouterBtn.textContent = '⚡ Test';
+        testOpenRouterBtn.disabled = false;
+      }
+    });
+  }
+
   // OpenRouter API Key visibility toggle
   toggleVisibilityBtn.addEventListener('click', () => {
     const isPassword = apiKeyInput.type === 'password';
@@ -438,10 +496,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="prov-selected-models-list models-list"></div>
 
             <div class="prov-picker-row" style="margin-top: 12px;">
-              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
                 <input type="text" class="prov-search-input" placeholder="🔍 Search fetched models..." style="flex: 1; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);">
+                <button class="btn btn-secondary btn-sm prov-test-btn" type="button" title="Test endpoint latency">⚡ Test</button>
                 <button class="btn btn-secondary btn-sm prov-fetch-btn" type="button">Fetch Models</button>
               </div>
+              <div class="prov-test-status" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; display: none;"></div>
               <div class="prov-search-results" style="max-height: 200px; overflow-y: auto; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; display: none;"></div>
             </div>
 
@@ -467,6 +527,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const selectedListEl = card.querySelector('.prov-selected-models-list');
       const searchInput = card.querySelector('.prov-search-input');
       const searchResultsEl = card.querySelector('.prov-search-results');
+      const testBtn = card.querySelector('.prov-test-btn');
+      const testStatus = card.querySelector('.prov-test-status');
       const fetchBtn = card.querySelector('.prov-fetch-btn');
       const manualInput = card.querySelector('.prov-manual-input');
       const addManualBtn = card.querySelector('.prov-add-manual-btn');
@@ -652,6 +714,60 @@ document.addEventListener('DOMContentLoaded', async () => {
           fetchBtn.disabled = false;
         }
       });
+
+      // Test Provider Connection
+      if (testBtn) {
+        testBtn.addEventListener('click', async () => {
+          if (!updateCardCompletion()) {
+            if (testStatus) {
+              testStatus.style.display = 'block';
+              testStatus.style.color = '#ef4444';
+              testStatus.textContent = '⚠️ Enter Base URL and API Key first.';
+            }
+            showToast('❌ Enter Base URL and API Key first.');
+            return;
+          }
+          const url = (prov.baseUrl || '').trim().replace(/\/+$/, '');
+          const key = (prov.apiKey || '').trim();
+          testBtn.textContent = '⚡ Testing...';
+          testBtn.disabled = true;
+          if (testStatus) {
+            testStatus.style.display = 'block';
+            testStatus.style.color = 'var(--text-muted)';
+            testStatus.textContent = `Testing connection to ${prov.name || 'provider'}...`;
+          }
+          const start = performance.now();
+          try {
+            const pingUrl = url.endsWith('/models') ? url : `${url}/models`;
+            const headers = {};
+            if (key) headers['Authorization'] = `Bearer ${key}`;
+            const res = await fetch(pingUrl, { headers });
+            const latency = Math.round(performance.now() - start);
+            if (res.ok) {
+              if (testStatus) {
+                testStatus.style.color = '#22c55e';
+                testStatus.textContent = `✅ Connected successfully (${latency}ms)`;
+              }
+              showToast(`✅ ${prov.name || 'Provider'} responded in ${latency}ms`);
+            } else {
+              if (testStatus) {
+                testStatus.style.color = '#ef4444';
+                testStatus.textContent = `❌ Server responded with HTTP ${res.status}`;
+              }
+              showToast(`❌ ${prov.name || 'Provider'} HTTP ${res.status}`);
+            }
+          } catch (err) {
+            if (testStatus) {
+              testStatus.style.color = '#ef4444';
+              testStatus.textContent = `❌ Connection failed: ${err.message}`;
+            }
+            showToast(`❌ Connection failed: ${err.message}`);
+          } finally {
+            testBtn.textContent = '⚡ Test';
+            testBtn.disabled = false;
+          }
+        });
+      }
 
       function renderSearchResults(query) {
         const models = prov.allModels || [];

@@ -194,6 +194,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
 
+    case "VRH_SELECTION_ACTION": {
+      const windowId = sender.tab?.windowId;
+      if (windowId && chrome.sidePanel && typeof chrome.sidePanel.open === 'function') {
+        chrome.sidePanel.open({ windowId }).catch(() => {});
+      }
+      if (chrome.storage && chrome.storage.session) {
+        chrome.storage.session.set({
+          pendingSelectionAction: {
+            action: message.action,
+            text: message.text,
+            timestamp: Date.now()
+          }
+        }).catch(() => {});
+      }
+      // Broadcast to any active sidepanel
+      chrome.runtime.sendMessage({
+        action: "EXECUTE_SELECTION_ACTION",
+        subAction: message.action,
+        text: message.text
+      }).catch(() => {});
+      sendResponse({ success: true });
+      break;
+    }
+
     default:
       break;
   }

@@ -1819,4 +1819,199 @@ html[data-theme="light"] .custom-select-menu.glass {
   cursor: pointer;
 }
 
+/* ═══════════════════════════════════════════════════
+   Interactive Agent Execution Card (Version 1.0)
+   ═══════════════════════════════════════════════════ */
+.agent-execution-card {
+  margin: 10px 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(132, 204, 22, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: fadeSlideUp 0.3s ease;
+  font-family: inherit;
+}
+
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(132, 204, 22, 0.08);
+  border-bottom: 1px solid rgba(132, 204, 22, 0.15);
+}
+
+.agent-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-color);
+}
+
+.agent-pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #84cc16;
+  box-shadow: 0 0 8px #84cc16;
+  animation: pulseGlow 1.5s infinite;
+}
+
+.agent-pulse-indicator.paused {
+  background: #eab308;
+  box-shadow: 0 0 8px #eab308;
+}
+
+.agent-pulse-indicator.done {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: none;
+}
+
+.agent-pulse-indicator.error {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: none;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.agent-card-badge {
+  padding: 2px 6px;
+  background: rgba(132, 204, 22, 0.2);
+  color: #d9f99d;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.agent-step-counter {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.agent-stop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.agent-stop-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
+
+.agent-goal-display {
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: var(--text-color);
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--glass-border);
+  font-weight: 500;
+}
+
+.agent-current-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  color: var(--system-text);
+  font-weight: 500;
+}
+
+.agent-action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(132, 204, 22, 0.2);
+  border-top-color: #84cc16;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.agent-steps-accordion {
+  border-top: 1px solid var(--glass-border);
+}
+
+.agent-steps-summary {
+  padding: 8px 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.agent-steps-summary:hover {
+  color: var(--text-color);
+}
+
+.agent-steps-list {
+  padding: 6px 14px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.agent-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-color);
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid #84cc16;
+}
+
+.agent-step-num {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.agent-step-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Restricted page alert banner */
+.restricted-page-banner {
+  margin: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  color: #fef08a;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+
 

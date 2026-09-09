@@ -155,45 +155,75 @@
     <div class="header">
       <div class="logo">VRH.AI</div>
       <h1>Privacy Policy</h1>
-      <div class="last-updated">Last updated: June 23, 2026</div>
+      <div class="last-updated">Last updated: September 2026</div>
     </div>
     
     <div class="divider"></div>
 
     <section>
-      <h2>1. Privacy Commitment</h2>
-      <p>At VRH.AI, we believe that your data belongs to you. This extension is designed from the ground up to respect your privacy and secure your information. All computational processes, configurations, and conversation logs reside exclusively on your local device.</p>
+      <h2>1. Privacy Commitment & Architecture</h2>
+      <p>VRH.AI is an open-source autonomous browser copilot built strictly on a Bring-Your-Own-Key (BYOK) model. All computational operations, settings configurations, and chat histories reside entirely within your local browser environment. We do not operate an intermediary server, telemetry service, tracking beacon, or user database.</p>
     </section>
 
     <section>
       <h2>2. Data Collection and Transmission</h2>
-      <p>VRH.AI does not collect, harvest, or transmit your personal data. Here is how your information is handled:</p>
+      <p>VRH.AI does not collect, harvest, store, or sell personal information:</p>
       <ul>
-        <li><strong>No Telemetry/Analytics:</strong> We do not track your usage habits, clicks, or prompt histories. We do not use cookies or run remote telemetry servers.</li>
-        <li><strong>API Communications:</strong> Chat prompts, translation texts, and document summaries are sent directly from your browser to your configured AI provider using the custom API Endpoint and API Key you specify. No intermediary proxy is used by VRH.AI.</li>
-        <li><strong>No Page Scraping:</strong> Tab contents and shared documents are parsed locally within your browser sandbox solely to feed context to your chosen LLM on your direct command.</li>
+        <li><strong>Zero Telemetry / Analytics:</strong> We collect zero analytics, zero usage tracking metrics, and zero behavioral telemetry. We do not use tracking cookies or external logging endpoints.</li>
+        <li><strong>Direct Provider Communications:</strong> Chat prompts, attached images, and document context are transmitted directly from your client browser to your chosen AI model provider (e.g., OpenRouter, Groq, Ollama, or a custom OpenAI-compatible endpoint) using your personal API key.</li>
+        <li><strong>Client-Side Processing:</strong> Webpage extraction and contextual assembly occur entirely within your Chromium browser sandbox solely upon your explicit instruction.</li>
       </ul>
     </section>
 
     <section>
-      <h2>3. Local Storage Architecture</h2>
-      <p>Any settings you adjust, models you select, and chat histories you create are saved locally using Chrome's extension storage engine (<code>chrome.storage.local</code>). This data is encrypted/isolated by your browser sandboxing and is inaccessible to external websites or third parties.</p>
+      <h2>3. Screen & Tab Capture Disclosure (Vision Mode & Manual Attachment)</h2>
+      <p>VRH.AI uses the <code>chrome.tabs.captureVisibleTab</code> API to capture viewport screenshots under two strictly defined user actions:</p>
+      <ul>
+        <li><strong>Manual Attachment:</strong> When you explicitly click the "Capture Tab Screenshot" button in the side panel, the active tab's visible area is captured as a PNG and displayed in your input staging area. It is transmitted to your configured AI provider only when you press submit.</li>
+        <li><strong>Autonomous Agent Mode:</strong> When you activate Autonomous Agent Mode with a vision-capable AI model selected, the extension captures a JPEG screenshot of the target tab at each reasoning step to apply Set-of-Mark visual grounding labels. This annotated image is sent directly to your configured multimodal LLM endpoint to enable visual element selection.</li>
+        <li><strong>Local In-Memory Lifetime:</strong> Older step screenshots are pruned from memory immediately during execution. Screenshots are never saved to disk, never cached permanently, and never transmitted to any third party other than your explicitly chosen AI provider endpoint.</li>
+      </ul>
     </section>
 
     <section>
-      <h2>4. Third-Party Services</h2>
-      <p>Your API key and context data are transmitted directly to your configured AI provider for text inference. By configuring a provider, you agree to their standard privacy guidelines and models processing policies. You can consult your chosen provider's data retention policies on their official website.</p>
+      <h2>4. On-Device Local OCR Processing (Tesseract.js)</h2>
+      <p>For PDF documents that lack an embedded text layer (such as scanned physical papers or image-only PDFs), VRH.AI performs Optical Character Recognition (OCR) using a fully vendored, client-side Tesseract.js engine:</p>
+      <ul>
+        <li><strong>100% On-Device Execution:</strong> All OCR analysis executes entirely on your device inside the local browser WebAssembly (WASM) runtime.</li>
+        <li><strong>Zero Network Transmission:</strong> The OCR worker, WASM binaries, and trained language model data (<code>eng.traineddata.gz</code>) are bundled within the extension itself under <code>extension/lib/tesseract/</code>. No document, image slice, or text string is sent across the network for OCR parsing.</li>
+      </ul>
     </section>
 
     <section>
-      <h2>5. Control Over Your Data</h2>
-      <p>Because all configuration data remains on your physical machine, you retain complete authority. You can export settings, download chat databases, or completely wipe all extension local memory instantly from the VRH.AI settings dashboard.</p>
+      <h2>5. Chrome DevTools Protocol (CDP) & Debugger Permission Disclosure</h2>
+      <p>VRH.AI requests the <code>debugger</code> permission to enable hardware-level browser automation via the Chrome DevTools Protocol (CDP):</p>
+      <ul>
+        <li><strong>Purpose of Debugger:</strong> During active Autonomous Agent Mode execution, the extension uses CDP (<code>chrome.debugger</code>) to dispatch genuine, trusted hardware input events—including mouse clicks, scrolling, and keyboard typing—enabling automation across modern single-page applications and complex web interfaces.</li>
+        <li><strong>What CDP Observes:</strong> While attached, CDP monitors navigation events, network idle status, and native JavaScript dialogs to confirm that an action (such as clicking a link or submitting a form) has concluded before proceeding to the next step.</li>
+        <li><strong>Ephemeral Attachment:</strong> The debugger attaches only to the target tab during active agent task execution and detaches immediately when the task is finished, canceled, or stopped.</li>
+        <li><strong>Sensitive Action Gate:</strong> The agent is governed by an automated Sensitive Action Gate that detects transactional or irreversible actions (such as checkout buttons, payment forms, account deletions, or password submissions), pausing execution and requiring explicit human user approval before any sensitive input is dispatched.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Local Storage Sandbox</h2>
+      <p>All user preferences, provider credentials, model selections, custom prompts, domain blacklists, and conversation histories are stored exclusively in Chrome's isolated storage sandbox (<code>chrome.storage.local</code>). This data is sandboxed to the extension and is inaccessible to web pages or third-party extensions.</p>
+    </section>
+
+    <section>
+      <h2>7. Third-Party AI Providers</h2>
+      <p>When you provide an API key for OpenRouter, Groq, Ollama, or custom endpoints, your prompt data and any attached images/tab context are sent directly to that provider. Data handling, logging, and retention policies are governed by the terms and privacy policy of your chosen AI provider.</p>
+    </section>
+
+    <section>
+      <h2>8. User Control and Data Authority</h2>
+      <p>You have complete control over your data. You may clear your conversation history, revoke API keys, export configurations, or wipe all extension data at any time through the VRH.AI Settings page or by uninstalling the extension.</p>
     </section>
 
     <div class="divider"></div>
 
     <div class="footer">
-      <p>© 2026 VRH.AI. Open-source under MIT License.</p>
+      <p>© 2026 VRH.AI. Open-source under ISC License.</p>
       <a href="#" onclick="window.close(); return false;" class="btn-close">Close Page</a>
     </div>
   </div>

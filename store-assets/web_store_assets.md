@@ -46,7 +46,7 @@ With a focus on speed, utility, and gorgeous glassmorphism aesthetics, VRH.AI in
 2. Instant Text Assistant: Highlight any text on a webpage to explain, summarize, translate, or rewrite it instantly in 1 click.
 3. Interactive Chat with Context: Chat with your open tab context, upload local files, or ask general questions.
 4. Connection Diagnostics: Keep track of latency, test connection pathways, and manage API keys easily.
-5. Developer BYOK Mode: Connect to OpenRouter keyless via our server proxy, or bring your own API key to customize model routing.
+5. Developer BYOK Mode: Bring your own API key to connect directly to OpenRouter, Groq, Ollama, or any custom OpenAI-compatible provider endpoint.
 
 🛡️ PRIVACY BY DESIGN:
 Your preferences, exclusions, and chat logs are stored strictly inside your local browser sandbox (`chrome.storage.local`). Exclusions permit blacklisting domains where the extension toolbar should never inject.

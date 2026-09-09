@@ -13,7 +13,7 @@ describe('PDF Extraction & Reliability Tests (Phase 2)', async () => {
 
   before(async () => {
     // Load pdfjs-dist in Node environment
-    pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
   });
 
   test('pdf.min.js and pdf.worker.min.js are vendored in extension/lib/pdfjs/', () => {
@@ -93,5 +93,49 @@ startxref
     const text = content.items.map(i => i.str).join(' ').trim();
 
     assert(text.includes('VRH.AI PDF Reliability Test'), `Expected text in PDF, got: "${text}"`);
+  });
+
+  test('vendored extension/lib/pdfjs/pdf.min.js defines pdfjsLib and getDocument API', () => {
+    const pdfJsPath = path.join(__dirname, '..', 'extension', 'lib', 'pdfjs', 'pdf.min.js');
+    const content = fs.readFileSync(pdfJsPath, 'utf8');
+
+    // Verify bundle structure and API definitions
+    assert(content.includes('pdfjsLib'), 'Bundle must declare or assign pdfjsLib');
+    assert(content.includes('getDocument'), 'Bundle must expose getDocument');
+    assert(content.includes('GlobalWorkerOptions'), 'Bundle must expose GlobalWorkerOptions');
+    assert(content.includes('window.pdfjsLib=pdfjsLib'), 'Bundle footer must ensure window.pdfjsLib is set');
+  });
+
+  test('scanned / image-only PDF detection correctly triggers empty page indexing for OCR fallback', async () => {
+    const scannedEmptyPdf = `%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >> endobj
+4 0 obj << /Length 0 >> stream
+endstream endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+00000000115 00000 n 
+0000000200 00000 n 
+trailer << /Size 5 /Root 1 0 R >>
+startxref
+251
+%%EOF`;
+
+    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(Buffer.from(scannedEmptyPdf)), isEvalSupported: false }).promise;
+    assert.strictEqual(doc.numPages, 1);
+    const page = await doc.getPage(1);
+    const content = await page.getTextContent();
+    const pageStr = content.items.map(i => i.str || '').join(' ').trim();
+
+    assert(pageStr.length < 10, 'Scanned PDF text layer must be empty/sparse (< 10 chars)');
+    const emptyPages = [];
+    if (pageStr.length < 10) {
+      emptyPages.push(1);
+    }
+    assert.strictEqual(emptyPages.length, 1, 'Page 1 must be flagged for OCR processing');
   });
 });

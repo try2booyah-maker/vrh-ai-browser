@@ -1,0 +1,117 @@
+const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
+
+const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Dark Glass Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1322" />
+      <stop offset="50%" stop-color="#080d18" />
+      <stop offset="100%" stop-color="#04060c" />
+    </linearGradient>
+
+    <!-- Glass Rim Border -->
+    <linearGradient id="glassBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+      <stop offset="35%" stop-color="#84cc16" stop-opacity="0.3" />
+      <stop offset="70%" stop-color="#22c55e" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.35" />
+    </linearGradient>
+
+    <!-- Ambient Aura -->
+    <radialGradient id="ambientAura" cx="50%" cy="58%" r="48%">
+      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35" />
+      <stop offset="50%" stop-color="#06b6d4" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#04060c" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Left Wing Gradient: Lime to Emerald -->
+    <linearGradient id="leftWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3e635" />
+      <stop offset="45%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#16a34a" />
+    </linearGradient>
+
+    <!-- Right Wing Gradient: Emerald to Cyan -->
+    <linearGradient id="rightWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Glass Top Sheen -->
+    <linearGradient id="topSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Glow Filter for High-DPI -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base Squircle Container (Fits Chrome Extension Icon Grid) -->
+  <rect x="20" y="20" width="472" height="472" rx="108" ry="108" fill="url(#bgGrad)" stroke="url(#glassBorder)" stroke-width="5" />
+
+  <!-- Ambient Glow Behind Mark -->
+  <circle cx="256" cy="285" r="160" fill="url(#ambientAura)" />
+
+  <!-- Monogram Mark -->
+  <g id="vrh-mark" filter="url(#neonGlow)">
+    <!-- Left Wing -->
+    <path d="M 108 132 L 192 132 L 256 276 L 256 420 L 236 420 Z" fill="url(#leftWing)" />
+
+    <!-- Right Wing -->
+    <path d="M 404 132 L 320 132 L 256 276 L 256 420 L 276 420 Z" fill="url(#rightWing)" />
+
+    <!-- Top Left Cap Sheen -->
+    <polygon points="108,132 192,132 182,148 118,148" fill="#ffffff" opacity="0.35" />
+
+    <!-- Top Right Cap Sheen -->
+    <polygon points="404,132 320,132 330,148 394,148" fill="#ffffff" opacity="0.25" />
+
+    <!-- Center Prism Refraction Seam -->
+    <line x1="256" y1="276" x2="256" y2="420" stroke="#ffffff" stroke-width="2.5" opacity="0.45" />
+  </g>
+
+  <!-- Glass Highlight Curvature Overlay -->
+  <path d="M 32 120 C 32 68 68 32 120 32 L 392 32 C 444 32 480 68 480 120 C 340 148 172 165 32 120 Z" fill="url(#topSheen)" />
+</svg>`;
+
+async function generate() {
+  const iconDir = path.join(__dirname, '..', 'extension', 'assets', 'icons');
+  if (!fs.existsSync(iconDir)) {
+    fs.mkdirSync(iconDir, { recursive: true });
+  }
+
+  // Save SVG source of truth
+  const svgPath = path.join(iconDir, 'icon.svg');
+  fs.writeFileSync(svgPath, svgIcon.trim(), 'utf8');
+  console.log(`Wrote SVG source: ${svgPath}`);
+
+  // Also write to store-assets for publication packages
+  const storeIconDir = path.join(__dirname, '..', 'store-assets');
+  fs.writeFileSync(path.join(storeIconDir, 'icon.svg'), svgIcon.trim(), 'utf8');
+
+  // Rasterize to 16, 32, 48, 128
+  const sizes = [16, 32, 48, 128];
+  for (const size of sizes) {
+    const outPath = path.join(iconDir, `icon${size}.png`);
+    await sharp(Buffer.from(svgIcon))
+      .resize(size, size)
+      .png({ compressionLevel: 9 })
+      .toFile(outPath);
+    console.log(`Generated ${size}x${size} icon: ${outPath}`);
+  }
+}
+
+generate().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

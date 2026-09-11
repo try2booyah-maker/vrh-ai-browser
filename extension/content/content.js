@@ -793,10 +793,16 @@ document.addEventListener('mouseup', () => {
           rewriteBtn.textContent = '✍️ Rewrite';
           rewriteBtn.onclick = () => sendSelectionAction('rewrite');
 
+          const askBtn = document.createElement('button');
+          askBtn.className = 'vrh-sel-btn';
+          askBtn.textContent = '💬 Ask VRH';
+          askBtn.onclick = () => sendSelectionAction('ask');
+
           selectionToolbar.appendChild(explainBtn);
           selectionToolbar.appendChild(summarizeBtn);
           selectionToolbar.appendChild(translateBtn);
           selectionToolbar.appendChild(rewriteBtn);
+          selectionToolbar.appendChild(askBtn);
           document.body.appendChild(selectionToolbar);
         }
 

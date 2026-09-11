@@ -4,7 +4,7 @@
  * restricted URL guardrails, selection actions, and status updates.
  */
 
-const { describe, it } = require('node:test');
+const { describe, it, before } = require('node:test');
 const assert = require('node:assert');
 
 describe('Version 1.0 Agent Lifecycle & Guardrails', () => {
@@ -114,9 +114,18 @@ describe('Version 1.0 Agent Lifecycle & Guardrails', () => {
       };
 
       assert.strictEqual(payload.action, 'VRH_SELECTION_ACTION');
-      assert.ok(['explain', 'summarize', 'translate', 'rewrite'].includes(payload.command));
+      assert.ok(['explain', 'summarize', 'translate', 'rewrite', 'ask'].includes(payload.command));
       assert.ok(payload.text.length > 0);
       assert.ok(payload.url.startsWith('https://'));
+
+      // Also verify 'ask' command contract
+      const askPayload = {
+        action: 'VRH_SELECTION_ACTION',
+        command: 'ask',
+        text: 'Tell me what you can do',
+        url: 'https://example.com'
+      };
+      assert.ok(['explain', 'summarize', 'translate', 'rewrite', 'ask'].includes(askPayload.command));
     });
   });
 
@@ -149,4 +158,82 @@ describe('Version 1.0 Agent Lifecycle & Guardrails', () => {
     });
   });
 
+  // 5. VRH.AI Platform Persona & Capabilities Contract
+  describe('VRH.AI Platform Persona & System Prompt Contract', () => {
+    let buildVRHSystemPrompt;
+
+    before(async () => {
+      global.window = global.window || {};
+      const mod = await import('../extension/sidepanel/sidepanel.js');
+      buildVRHSystemPrompt = mod.buildVRHSystemPrompt || globalThis.buildVRHSystemPrompt || global.window.buildVRHSystemPrompt;
+    });
+
+    it('exports buildVRHSystemPrompt function', () => {
+      assert.strictEqual(typeof buildVRHSystemPrompt, 'function');
+    });
+
+    it('strictly establishes identity as VRH.AI and enforces anti-leakage directives', () => {
+      const prompt = buildVRHSystemPrompt({ pageText: 'Hello world' });
+      assert.ok(prompt.includes('You are VRH.AI'));
+      assert.ok(prompt.includes('NO MODEL/BRAND LEAKAGE'));
+      assert.ok(prompt.includes('NEVER refer to yourself as ChatGPT, Claude, Llama, DeepSeek'));
+      assert.ok(prompt.includes('NEVER DENY CAPABILITIES'));
+      assert.ok(prompt.includes('HONESTY & REAL WORKING CAPABILITIES'));
+    });
+
+    it('accurately details all 9 real working platform capabilities', () => {
+      const prompt = buildVRHSystemPrompt({ pageText: 'Test page content' });
+      // 1. Live Web Page Copilot
+      assert.ok(prompt.includes('Live Web Page Understanding & Copilot (Ask Mode / /ask)'));
+      // 2. Autonomous Browser Automation
+      assert.ok(prompt.includes('Autonomous Browser Automation (Agent Mode / /agent)'));
+      assert.ok(prompt.includes('Perception Engine 2.0'));
+      assert.ok(prompt.includes('Chrome DevTools Protocol (CDP)'));
+      assert.ok(prompt.includes('Set-of-Marks (SoM)'));
+      // 3. Multi-Tab
+      assert.ok(prompt.includes('Multi-Tab Context Integration (@ Tab Selector)'));
+      // 4. Vision
+      assert.ok(prompt.includes('Multimodal Vision & Screenshot Analysis'));
+      // 5. PDF & OCR
+      assert.ok(prompt.includes('Offline Client-Side Document Processing (PDF & OCR)'));
+      assert.ok(prompt.includes('Mozilla pdf.js'));
+      assert.ok(prompt.includes('Tesseract.js OCR'));
+      // 6. Summarization
+      assert.ok(prompt.includes('Fast Page Summarization (Summarize Tab & /summarize)'));
+      // 7. Selection Toolbar
+      assert.ok(prompt.includes('In-Page Selection Toolbar'));
+      // 8. Slash Commands
+      assert.ok(prompt.includes('Productivity Slash Commands'));
+      // 9. Privacy & Multi-Provider
+      assert.ok(prompt.includes('Privacy-First & Multi-Provider Freedom'));
+      assert.ok(prompt.includes('Ollama'));
+    });
+
+    it('detects capability queries and injects HIGH PRIORITY DIRECTIVE', () => {
+      const capQueries = [
+        'what are your full capabilities',
+        'what are the full capabilities and what you do',
+        'What can you do?',
+        'who are you',
+        'tell me about yourself',
+        'what are your platform features',
+        'what is vrh.ai'
+      ];
+
+      for (const q of capQueries) {
+        const prompt = buildVRHSystemPrompt({ pageText: 'Sample text', userQuery: q });
+        assert.ok(prompt.includes('HIGH PRIORITY DIRECTIVE — USER ASKING ABOUT VRH.AI IDENTITY & CAPABILITIES'), `Failed for query: ${q}`);
+        assert.ok(prompt.includes('DO NOT apologize. DO NOT say you cannot browse or interact with the browser'));
+      }
+    });
+
+    it('does not inject HIGH PRIORITY DIRECTIVE for normal context queries', () => {
+      const normalPrompt = buildVRHSystemPrompt({ pageText: 'Quantum mechanics notes', userQuery: 'Explain quantum entanglement' });
+      assert.strictEqual(normalPrompt.includes('HIGH PRIORITY DIRECTIVE — USER ASKING ABOUT VRH.AI IDENTITY & CAPABILITIES'), false);
+      assert.ok(normalPrompt.includes('Active Tab Page Text:'));
+      assert.ok(normalPrompt.includes('Quantum mechanics notes'));
+    });
+  });
+
 });
+

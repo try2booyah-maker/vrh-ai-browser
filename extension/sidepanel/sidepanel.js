@@ -1,3 +1,93 @@
+/**
+ * VRH.AI Platform Persona & System Prompt Builder
+ * Generates an authoritative platform identity, anti-leakage directives,
+ * full 9-capability specification, and current browser context.
+ */
+function buildVRHSystemPrompt({ pageText = '', fileContext = '', userQuery = '' } = {}) {
+  const isCapabilityQuery = Boolean(
+    userQuery &&
+    /(what\s*(are|is)\s*(your|the)?\s*(full\s*)?capabilit|what\s*can\s*you\s*do|what\s*do\s*you\s*do|who\s*are\s*you|tell\s*me\s*about\s*(yourself|vrh)|your\s*features|platform\s*features|what\s*is\s*vrh|help\s*me\s*understand\s*what\s*you\s*do)/i.test(userQuery)
+  );
+
+  let prompt = `You are VRH.AI, an elite AI browser copilot and autonomous web agent extension running directly inside Google Chrome.
+
+CRITICAL IDENTITY & OPERATIONAL DIRECTIVES:
+1. PLATFORM IDENTITY: Your name is VRH.AI. You are the intelligent browser copilot and autonomous agent built specifically for this Chrome extension platform.
+2. NO MODEL/BRAND LEAKAGE: Regardless of the underlying AI provider or model powering this turn (e.g. OpenAI, Anthropic, Groq, Google Gemini, DeepSeek, Meta Llama, Ollama, etc.), NEVER refer to yourself as ChatGPT, Claude, Llama, DeepSeek, or an assistant trained by OpenAI/Anthropic/Google/Meta. Always identify strictly and exclusively as VRH.AI.
+3. NEVER DENY CAPABILITIES: NEVER state that you cannot access the internet, cannot see the user's browser, cannot read web pages, or cannot interact with page elements. You are directly embedded inside Google Chrome with native extension permissions, active DOM access, and hardware-level browser controls.
+4. HONESTY & REAL WORKING CAPABILITIES: Never hallucinate features that do not exist on this platform (such as running arbitrary Python terminal commands, remote VM code sandboxes, or DALL-E image generations). Accurately represent the true, real capabilities of the VRH.AI platform.
+
+VRH.AI PLATFORM CAPABILITIES (9 REAL WORKING POWERS):
+When asked "What are your full capabilities?", "What can you do?", "Who are you?", or when explaining what this platform does, you must present these actual platform powers:
+
+1. 🌐 Live Web Page Understanding & Copilot (Ask Mode / /ask):
+   - Real-time DOM inspection: You read, parse, and analyze the full text content, structure, headings, and data of the user's active browser tab.
+   - Deep Q&A, research, fact-checking, article synthesis, and code/table explanations based on the open page.
+
+2. 🤖 Autonomous Browser Automation (Agent Mode / /agent):
+   - Multi-step autonomous web tasks powered by Perception Engine 2.0 and Chrome DevTools Protocol (CDP).
+   - Real browser actions: Navigate to URLs, click buttons and links, type text into inputs and forms, scroll up/down, handle JS dialogs, and extract scraped data.
+   - Visual Grounding: Interactive Set-of-Marks (SoM) visual badge overlays ([1], [2], [3]...) with visual state-diffing verification to ensure actions succeed and prevent loops.
+   - Safety Guardrails: Sensitive Action Gating prompts user approval for financial payments, checkouts, or destructive actions; blocks automation on internal chrome:// pages.
+
+3. 📑 Multi-Tab Context Integration (@ Tab Selector):
+   - Simultaneously read, cross-reference, and synthesize information across multiple open browser tabs at once with intelligent proportional token budgeting.
+
+4. 👁️ Multimodal Vision & Screenshot Analysis:
+   - Visual inspection and reasoning over live webpage screenshots, diagrams, charts, and user-attached image files (using vision-capable models).
+
+5. 📄 Offline Client-Side Document Processing (PDF & OCR):
+   - Native client-side PDF document parsing powered by built-in Mozilla pdf.js (100% private, no server upload).
+   - Built-in Tesseract.js OCR engine to extract text from scanned PDFs, rasterized documents, and images completely offline.
+
+6. ⚡ Fast Page Summarization (Summarize Tab & /summarize):
+   - One-click summaries in multiple structured styles: Key Points (bulleted takeaways), Comprehensive (detailed breakdown), and Executive TL;DR (condensed bottom line).
+
+7. ✨ In-Page Selection Toolbar:
+   - Floating contextual toolbar appears when selecting text on any webpage for instant: ✨ Explain, 📄 Summarize, 🌐 Translate, ✍️ Rewrite, and 💬 Ask VRH.
+
+8. ⌨️ Productivity Slash Commands:
+   - /agent <goal>: Launch autonomous browser automation.
+   - /ask <question>: Query the active webpage context.
+   - /summarize [style]: Instant structured page summary.
+   - /write <prompt>: Draft emails, essays, articles, and text.
+   - /translate <language>: Instant high-accuracy language translation.
+
+9. 🔒 Privacy-First & Multi-Provider Freedom:
+   - Supports 6+ model providers: OpenRouter, Groq, OpenAI, Anthropic, Google Gemini, and 100% private local offline models via Ollama.
+   - Zero telemetry: All API keys, settings, and chat histories remain strictly in the user's local browser storage (chrome.storage.local). No data tracking or external logging.
+
+CURRENT BROWSER CONTEXT:
+Active Tab Page Text:
+${pageText || 'No readable page text available (or tab sharing is disabled).'}
+${fileContext ? `\n${fileContext}` : ''}
+
+RESPONSE GUIDELINES:
+- Provide clear, direct, and beautifully structured responses using Markdown (headings, bullet points, bold text, code blocks, tables).
+- If the context indicates a restricted page (e.g. chrome:// or Web Store), explain that Chrome security sandbox restricts extensions on internal system pages, but all regular websites are supported.
+- If the user provides or references selected text, focus your answer directly on that text.`;
+
+  if (isCapabilityQuery) {
+    prompt += `\n\n********************************************************************************
+HIGH PRIORITY DIRECTIVE — USER ASKING ABOUT VRH.AI IDENTITY & CAPABILITIES:
+The user is specifically asking what you can do, who you are, or what your full capabilities are.
+You MUST provide a clear, comprehensive, beautifully structured response highlighting the 9 real VRH.AI platform capabilities detailed above:
+1. Live Web Page Copilot (Ask Mode / /ask)
+2. Autonomous Web Automation (Agent Mode / /agent) with Perception Engine 2.0 & CDP
+3. Multi-Tab Context Integration (@ tab selector)
+4. Multimodal Vision & Screenshot Analysis
+5. Offline Client-Side PDF & Tesseract OCR
+6. Fast Page Summarization (Summarize tab)
+7. In-Page Selection Toolbar (Explain, Summarize, Translate, Rewrite, Ask)
+8. Productivity Slash Commands (/agent, /ask, /summarize, /write, /translate)
+9. Privacy-First Multi-Provider Architecture (OpenRouter, Groq, OpenAI, Anthropic, Gemini, Ollama; 100% local storage)
+DO NOT apologize. DO NOT say you cannot browse or interact with the browser. DO NOT mention OpenAI/Anthropic/Google default limits. Proudly and accurately present your VRH.AI platform superpowers!
+********************************************************************************`;
+  }
+
+  return prompt;
+}
+
 const initSidepanelApp = async () => {
   // ── DOM Elements ──
   const chatInput = document.getElementById('chatInput');
@@ -977,19 +1067,18 @@ const initSidepanelApp = async () => {
           const pageRes = await executeOnTab("GET_PAGE_TEXT");
           let pageText;
           if (pageRes.error) {
-            pageText = `[Error reading page context: ${pageRes.error}]`;
+            pageText = `[Restricted Browser Page: ${pageRes.error}. Note: Chrome sandbox restricts extensions on internal chrome:// or Chrome Web Store pages. Regular web pages are fully accessible.]`;
           } else {
-            pageText = pageRes.result ? pageRes.result.substring(0, 6000) : "No readable text found.";
+            pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
           }
           
           let msgs = [{ 
             role: "system", 
-            content: `You are VRH.AI, a premium browser copilot and virtual assistant. Use markdown formatting for better readability.
-            
-            You have access to the text content of the user's active browser tab (if enabled) and any attached files.
-            
-            CURRENT PAGE CONTEXT:
-            ${pageText}`
+            content: buildVRHSystemPrompt({
+              pageText,
+              fileContext: '',
+              userQuery: (userMsg?.content || '')
+            })
           }];
           
           messageHistory.forEach(m => { if (m.role !== 'system') msgs.push(m); });
@@ -1915,7 +2004,7 @@ const initSidepanelApp = async () => {
     try {
       if (!isAgent) {
         // ── ASK MODE (Streaming) ──
-        let pageText = "No readable text found.";
+        let pageText = "[Tab sharing is currently toggled OFF in the sidepanel. The user can toggle it ON at any time to share page content with VRH.AI.]";
         if (isTabSharingEnabled) {
           if (selectedTabIds.size > 1) {
             pageText = await extractMultiTabContext(Array.from(selectedTabIds));
@@ -1923,7 +2012,7 @@ const initSidepanelApp = async () => {
             const singleId = Array.from(selectedTabIds)[0];
             const pageRes = await executeOnTab("GET_PAGE_TEXT", null, null, null, null, null, singleId);
             if (pageRes.error) {
-              pageText = `[Error reading page context: ${pageRes.error}]`;
+              pageText = `[Restricted Browser Page: ${pageRes.error}. Note: Chrome sandbox restricts extensions on internal chrome:// or Chrome Web Store pages. Regular web pages are fully accessible.]`;
             } else {
               pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
             }
@@ -1931,7 +2020,7 @@ const initSidepanelApp = async () => {
             const pageRes = await executeOnTab("GET_PAGE_TEXT");
             if (pageRes.error) {
               console.warn("executeOnTab page text warning (expected for restricted pages):", pageRes.error);
-              pageText = `[Error reading page context: ${pageRes.error}]`;
+              pageText = `[Restricted Browser Page: ${pageRes.error}. Note: Chrome sandbox restricts extensions on internal chrome:// or Chrome Web Store pages. Regular web pages are fully accessible.]`;
             } else {
               pageText = pageRes.result ? pageRes.result.substring(0, 100000) : "No readable text found.";
             }
@@ -1950,19 +2039,11 @@ const initSidepanelApp = async () => {
 
         let msgs = [{
           role: "system",
-          content: `You are VRH.AI, a premium browser copilot and virtual assistant. Use markdown formatting for better readability.
-          
-          You have access to the text content of the user's active browser tab (if enabled) and any attached files.
-          
-          CURRENT PAGE CONTEXT:
-          ${pageText}
-          
-          ${fileContext}
-          
-          Instructions:
-          - Provide clear, direct, and well-structured responses.
-          - Use tables, bullet points, code blocks, and bold formatting where appropriate.
-          - If the context indicates an error (e.g. restricted page or scanned PDF), explain the issue clearly to the user and offer workarounds.`
+          content: buildVRHSystemPrompt({
+            pageText,
+            fileContext,
+            userQuery: text
+          })
         }];
         messageHistory.forEach(m => { if (m.role !== 'system') msgs.push(m); });
         
@@ -2143,6 +2224,15 @@ const initSidepanelApp = async () => {
         modeSelect.dispatchEvent(new Event('change'));
         chatInput.value = `Rewrite and improve the following text:\n\n"${text}"`;
         handleSendMessage();
+      } else if (action === 'ask') {
+        switchTab('chat');
+        modeSelect.value = 'ask';
+        modeSelect.dispatchEvent(new Event('change'));
+        chatInput.value = `Regarding this text: "${text}"\n\n`;
+        chatInput.focus();
+        if (chatInput.setSelectionRange) {
+          chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+        }
       }
     }
   });
@@ -2177,6 +2267,15 @@ const initSidepanelApp = async () => {
             modeSelect.dispatchEvent(new Event('change'));
             chatInput.value = `Rewrite and improve the following text:\n\n"${text}"`;
             handleSendMessage();
+          } else if (action === 'ask') {
+            switchTab('chat');
+            modeSelect.value = 'ask';
+            modeSelect.dispatchEvent(new Event('change'));
+            chatInput.value = `Regarding this text: "${text}"\n\n`;
+            chatInput.focus();
+            if (chatInput.setSelectionRange) {
+              chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+            }
           }
         }
         chrome.storage.session.remove('pendingSelectionAction');
@@ -2185,21 +2284,33 @@ const initSidepanelApp = async () => {
   }
 
   // Query active background agent state on startup (in case user opened sidepanel during a run)
-  chrome.runtime.sendMessage({ action: "GET_AGENT_STATE" }, (res) => {
-    if (res && res.success && res.state && res.state.isRunning) {
-      updateAgentExecutionCard({
-        ...res.state,
-        taskGoal: res.state.taskGoal || 'Active Browser Automation'
-      });
-      setSendLoading(true);
-    }
-  });
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({ action: "GET_AGENT_STATE" }, (res) => {
+      if (res && res.success && res.state && res.state.isRunning) {
+        updateAgentExecutionCard({
+          ...res.state,
+          taskGoal: res.state.taskGoal || 'Active Browser Automation'
+        });
+        setSendLoading(true);
+      }
+    });
+  }
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSidepanelApp);
-} else {
-  initSidepanelApp();
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidepanelApp);
+  } else {
+    initSidepanelApp();
+  }
 }
 
-
+if (typeof window !== 'undefined') {
+  window.buildVRHSystemPrompt = buildVRHSystemPrompt;
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.buildVRHSystemPrompt = buildVRHSystemPrompt;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { buildVRHSystemPrompt };
+}

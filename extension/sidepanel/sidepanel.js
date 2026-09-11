@@ -1997,7 +1997,9 @@ const initSidepanelApp = async () => {
     const signal = activeAbortController.signal;
 
     const mode = modeSelect.value;
-    const isAgent = mode === 'agent';
+    const isModeInquiry = /^(what|how|tell me|can you|explain|what's|whats)\b.*(this mode|agent mode|you do|capabilities|can do|work)/i.test(text.trim()) ||
+                          /^(help|capabilities|what can you do|what is agent mode)\??$/i.test(text.trim());
+    const isAgent = mode === 'agent' && !isModeInquiry;
     const loader = createLoadingDots(); chatArea.appendChild(loader); chatArea.scrollTop = chatArea.scrollHeight;
     let activeMsg = null;
 
@@ -2065,7 +2067,8 @@ const initSidepanelApp = async () => {
         if (chatArea.contains(loader)) chatArea.removeChild(loader);
 
         let targetTab;
-        if (selectedTabId) targetTab = await chrome.tabs.get(selectedTabId).catch(() => null);
+        const chosenTabId = selectedTabIds.size > 0 ? Array.from(selectedTabIds)[0] : selectedTabId;
+        if (chosenTabId) targetTab = await chrome.tabs.get(chosenTabId).catch(() => null);
         if (!targetTab || (targetTab.url && (targetTab.url.startsWith('chrome-extension://') || targetTab.url.startsWith('chrome://')))) {
           const tabs = await chrome.tabs.query({ currentWindow: true });
           targetTab = tabs.find(t => t.active && t.url && (t.url.startsWith('http://') || t.url.startsWith('https://'))) ||
@@ -2084,7 +2087,7 @@ const initSidepanelApp = async () => {
           url.includes('chromewebstore.google.com') ||
           url.includes('chrome.google.com/webstore')
         ) {
-          appendMessage("⚠️ **Restricted Browser Page**\n\nChrome prevents extensions from automating internal browser pages (such as `chrome://` settings or the Chrome Web Store).\n\nPlease open or switch to any regular webpage (e.g. [Google](https://google.com), [Wikipedia](https://wikipedia.org), or any web app) and run your agent task again.", 'assistant');
+          appendMessage("⚠️ **Restricted Browser Page**\n\nYou currently have **Agent Mode** selected, which tries to automate actions on your active browser tab.\n\nHowever, Chrome's security sandbox strictly prevents extensions from automating internal browser pages (such as `chrome://` settings, extensions management, or the Chrome Web Store).\n\n**To run an autonomous task:**\n1. Open or switch to any regular webpage (e.g. [Google](https://google.com), [GitHub](https://github.com), or [Wikipedia](https://wikipedia.org)).\n2. Give VRH.AI an action task like: *'Search for Python tutorials and click the first video'*.\n\n💡 *Tip: If you want to ask questions or chat instead of automating, switch the mode dropdown to **Ask** mode.*", 'assistant');
           setSendLoading(false);
           return;
         }

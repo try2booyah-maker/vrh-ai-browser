@@ -7,7 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "package": "node scripts/package-extension.cjs"
   },
   "keywords": [],
   "author": "",

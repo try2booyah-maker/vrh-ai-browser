@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "package": "node scripts/package-extension.cjs"
+    "package": "node scripts/package-extension.cjs",
+    "release": "node scripts/create-github-release.cjs"
   },
   "keywords": [],
   "author": "",

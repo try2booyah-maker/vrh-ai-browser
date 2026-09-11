@@ -333,6 +333,19 @@ function injectSetOfMarks() {
   clearSetOfMarks();
   somRegistry.clear();
 
+  if (!document.body) {
+    return {
+      manifest: [],
+      count: 0,
+      hasCaptcha: false,
+      viewport: {
+        width: window.innerWidth || 1280,
+        height: window.innerHeight || 800,
+        dpr: window.devicePixelRatio || 1
+      }
+    };
+  }
+
   // 1. Auto-sweep nuisance banners first
   sweepAnnoyances();
 

@@ -237,23 +237,99 @@ export class AgentRunner {
   }
 
   /**
-   * Send message to target tab with automatic content script dynamic injection fallback.
+   * Robust wait for tab to complete loading after navigation or reload.
    */
-  async _sendMessageToTab(tabId, message) {
-    try {
-      return await chrome.tabs.sendMessage(tabId, message);
-    } catch (err) {
-      if (err?.message?.includes("Receiving end does not exist") || err?.message?.includes("Could not establish connection")) {
-        console.log(`[AgentRunner] Content script not present in tab ${tabId}. Dynamically injecting...`);
-        await chrome.scripting.executeScript({
-          target: { tabId },
-          files: ["content/content.js"]
-        }).catch(() => null);
-        await new Promise(r => setTimeout(r, 350));
-        return await chrome.tabs.sendMessage(tabId, message).catch(() => null);
+  async _waitForTabLoad(tabId, timeoutMs = 15000) {
+    const startTime = Date.now();
+
+    await new Promise((resolve) => {
+      let resolved = false;
+      const onUpdated = (updatedId, changeInfo) => {
+        if (updatedId === tabId && changeInfo.status === 'complete') {
+          cleanup();
+          resolve();
+        }
+      };
+
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, timeoutMs);
+
+      const cleanup = () => {
+        if (!resolved) {
+          resolved = true;
+          if (typeof chrome !== 'undefined' && chrome.tabs?.onUpdated) {
+            chrome.tabs.onUpdated.removeListener(onUpdated);
+          }
+          clearTimeout(timer);
+        }
+      };
+
+      if (typeof chrome !== 'undefined' && chrome.tabs?.onUpdated) {
+        chrome.tabs.onUpdated.addListener(onUpdated);
       }
-      throw err;
+
+      // Check current status immediately
+      if (typeof chrome !== 'undefined' && chrome.tabs?.get) {
+        chrome.tabs.get(tabId).then(t => {
+          if (t && t.status === 'complete' && (Date.now() - startTime > 1200)) {
+            cleanup();
+            resolve();
+          }
+        }).catch(() => {
+          cleanup();
+          resolve();
+        });
+      } else {
+        setTimeout(() => { cleanup(); resolve(); }, 1200);
+      }
+    });
+
+    // Extra settling buffer for heavy SPAs (YouTube, Twitter, Gmail)
+    await new Promise(r => setTimeout(r, 1200));
+
+    // Ensure content script is dynamically injected
+    if (typeof chrome !== 'undefined' && chrome.scripting?.executeScript) {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ["content/content.js"]
+      }).catch(() => null);
+      await new Promise(r => setTimeout(r, 300));
     }
+  }
+
+  /**
+   * Send message to target tab with automatic retries and content script injection.
+   */
+  async _sendMessageToTab(tabId, message, maxRetries = 4) {
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await chrome.tabs.sendMessage(tabId, message);
+        if (response !== undefined) return response;
+      } catch (err) {
+        lastError = err;
+        const msg = err?.message || '';
+
+        if (msg.includes("Receiving end does not exist") || msg.includes("Could not establish connection")) {
+          console.log(`[AgentRunner] Content script not ready in tab ${tabId} (attempt ${attempt}/${maxRetries}). Injecting...`);
+          if (typeof chrome !== 'undefined' && chrome.scripting?.executeScript) {
+            await chrome.scripting.executeScript({
+              target: { tabId },
+              files: ["content/content.js"]
+            }).catch(() => null);
+          }
+          await new Promise(r => setTimeout(r, attempt * 400));
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    console.warn(`[AgentRunner] _sendMessageToTab exhausted retries for tab ${tabId}:`, lastError);
+    return null;
   }
 
   /**
@@ -672,10 +748,23 @@ export class AgentRunner {
         const tab = await chrome.tabs.get(this.activeTabId).catch(() => null);
         if (!tab) throw new Error("Target tab was closed.");
 
-        // Sweep annoyances and scan DOM/Shadow roots
-        const somRes = await this._sendMessageToTab(this.activeTabId, { action: "INJECT_SET_OF_MARKS" });
+        // Wait if tab is actively navigating or loading
+        if (tab.status === 'loading') {
+          console.log(`[AgentRunner] Tab ${this.activeTabId} is still loading. Waiting for load completion...`);
+          await this._waitForTabLoad(this.activeTabId, 12000);
+        }
+
+        // Sweep annoyances and scan DOM/Shadow roots with retry
+        let somRes = await this._sendMessageToTab(this.activeTabId, { action: "INJECT_SET_OF_MARKS" });
         if (!somRes || !somRes.result) {
-          throw new Error("Failed to scan interactive elements on page.");
+          console.log(`[AgentRunner] Initial SOM scan failed or page still rendering. Retrying in 1200ms...`);
+          await new Promise(r => setTimeout(r, 1200));
+          somRes = await this._sendMessageToTab(this.activeTabId, { action: "INJECT_SET_OF_MARKS" });
+        }
+
+        if (!somRes || !somRes.result) {
+          const detail = somRes?.error || "Page is still loading or content script was blocked. Please try running your task again.";
+          throw new Error(`Failed to scan interactive elements on page: ${detail}`);
         }
 
         const { manifest, hasCaptcha, viewport } = somRes.result;
@@ -921,7 +1010,7 @@ ${annotatedScreenshotUrl ? 'Analyze the screenshot visual grounding labels [1], 
 
       case "navigate_to": {
         await chrome.tabs.update(this.activeTabId, { url: args.url });
-        await new Promise(r => setTimeout(r, 1200));
+        await this._waitForTabLoad(this.activeTabId);
         return { status: "navigated", url: args.url };
       }
 
@@ -930,11 +1019,13 @@ ${annotatedScreenshotUrl ? 'Analyze the screenshot visual grounding labels [1], 
           const newTab = await chrome.tabs.create({ url: args.url || 'https://google.com' });
           this.activeTabId = newTab.id;
           await cdpController.attach(this.activeTabId);
+          await this._waitForTabLoad(this.activeTabId);
           return { status: "tab_opened", tabId: newTab.id, url: args.url };
         } else if (args.action === 'switch' && args.tab_id) {
           await chrome.tabs.update(args.tab_id, { active: true });
           this.activeTabId = args.tab_id;
           await cdpController.attach(this.activeTabId);
+          await this._waitForTabLoad(this.activeTabId);
           return { status: "tab_switched", activeTabId: this.activeTabId };
         } else if (args.action === 'close' && args.tab_id) {
           await chrome.tabs.remove(args.tab_id);

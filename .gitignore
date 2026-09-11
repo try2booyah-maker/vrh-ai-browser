@@ -25,6 +25,9 @@ tests/*_test.png
 sidepanel_test.png
 settings_test.png
 *.png
+!extension/assets/icons/*.png
+!store-assets/*.png
+!store-assets/**/*.png
 scratch/
 
 # IDEs and editors

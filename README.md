@@ -1,95 +1,143 @@
-# VRH.AI — Intelligent Browser Copilot
+# VRH.AI — Autonomous Browser Copilot & Agent
 
-VRH.AI is an open-source, autonomous browser copilot extension designed to help you ask questions, automate browser tasks, summarize text, translate languages, and improve writing—directly within Chrome.
+[![Test Suite](https://img.shields.io/badge/tests-55%20passing-brightgreen.svg)](tests/)
+[![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue.svg)](extension/manifest.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.0-purple.svg)](package.json)
+
+**VRH.AI** is an open-source, private, autonomous browser copilot and co-agent built directly into Google Chrome. It supercharges your daily browsing, reading, document synthesis, and repetitive web tasks with modern frontier AI models—running 100% client-side with Bring-Your-Own-Key (BYOK) privacy.
 
 ---
 
-## 🌟 Key Features
+## ⚡ The 9 Superpowers of VRH.AI
 
-- **Autonomous Agent Mode**: Control tabs, click buttons, scroll, type text, and navigate pages using an LLM-driven browser controller.
-- **Direct Ask/Chat Mode**: Access active page text context, attach files, and chat with models seamlessly.
-- **Page Summary**: Extract key takeaways as bullets, paragraphs, or a quick TL;DR.
-- **Writing Tools**: Compose new content, rewrite paragraphs, and fix grammar in multiple tones.
-- **Translator**: Translate selected text between several languages.
-- **Quick Selection Toolbar**: Highlight any page text to quickly call explanation, summary, translation, or rewriting.
-- **PDF Reading**: Extract text directly from PDF files opened in the browser.
-- **File Attachments**: Attach local text/code files to provide context for AI conversations.
+1. 🌐 **Live Tab Copilot (`/ask`)**: Instantly query active webpage DOM text with zero latency.
+2. 🤖 **Autonomous Agent (`/agent`)**: Multi-step browser automation with Set-of-Marks visual perception, Chrome DevTools Protocol (CDP) execution, and sensitive action gating.
+3. 📑 **Multi-Tab Cross-Context (`@` mentions)**: Tag multiple open tabs in your prompt to synthesize cross-tab context with proportional character budgeting.
+4. 👁️ **Vision & Multimodal Input**: Seamlessly send screenshots and visual page buffers to vision models (GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro).
+5. 📄 **Offline PDF & OCR**: Vendored Mozilla `pdf.js` for digital PDFs and `Tesseract.js` client-side OCR for scanned documents.
+6. ⚡ **Instant Page Summarizer**: Switch to the Summarize tab to distill long documents into Key Bullet Points, Executive Paragraph, or a 1-sentence TL;DR.
+7. 💬 **In-Page Selection Toolbar**: Highlight any text on any page for 1-click Explain, Summarize, Translate, Rewrite, or direct insertion into the sidepanel chat.
+8. ⌨️ **Slash Commands**: Rapid command shortcuts (`/agent`, `/ask`, `/summarize`, `/write`, `/translate`).
+9. 🔒 **100% Client-Side Privacy (BYOK)**: Supports OpenRouter, Groq, OpenAI, Anthropic Claude, Google Gemini, and local Ollama. Keys stay strictly in `chrome.storage.local`.
 
 ---
 
 ## 📂 Repository Layout
 
-```
+```text
 /
-├── extension/                 # Chrome Extension Codebase
-│   ├── manifest.json          # Extension Manifest v3
+├── extension/                     # Chrome Extension Source (Manifest V3)
+│   ├── manifest.json              # Extension manifest & permissions
 │   ├── background/
-│   │   └── background.js      # Service Worker Lifecycle Controller
+│   │   └── background.js          # Service Worker lifecycle & keep-alives
 │   ├── content/
-│   │   └── content.js         # Page DOM Scraper and Highlight Interactor
+│   │   └── content.js             # In-page DOM scraper & floating selection toolbar
 │   ├── sidepanel/
-│   │   ├── sidepanel.html     # Main Panel Layout UI
-│   │   ├── sidepanel.js       # Main Panel Controller
-│   │   └── sidepanel.css      # Custom HSL-tailored Dark/Light CSS
+│   │   ├── sidepanel.html         # Native Chrome side panel layout
+│   │   ├── sidepanel.js           # Core sidepanel controller & VRH persona engine
+│   │   ├── sidepanel.css          # Cream-white & Obsidian dark mode styles
+│   │   ├── agentRunner.js         # Autonomous agent execution loop
+│   │   └── cdpController.js       # Chrome DevTools Protocol (CDP) driver
 │   ├── settings/
-│   │   ├── settings.html      # Options Page Layout UI
-│   │   ├── settings.js        # Options Controller (JSON backup/pools)
-│   │   └── settings.css       # Options Styling
+│   │   ├── settings.html          # Options page & provider configuration UI
+│   │   ├── settings.js            # Multi-provider management & latency tester
+│   │   └── settings.css           # Settings page styling
+│   ├── lib/                       # Vendored client-side engines
+│   │   ├── pdfjs/                 # Mozilla pdf.js engine & worker
+│   │   ├── tesseract/             # Tesseract.js OCR engine & worker
+│   │   └── dompurify.min.js       # Strict HTML sanitization engine
 │   └── legal/
-│       ├── privacy.html       # Privacy Policy Page
-│       └── terms.html         # Terms of Service Page
-├── store-assets/              # Chrome Web Store listing assets
-│   └── web_store_assets.md    # Store listing description & copy
-├── tests/                     # Test Suites
-│   └── test_extension.js      # Puppeteer Extension E2E script
-├── .gitignore                 # File exclusion list
-└── README.md                  # Project Documentation (this file)
+│       ├── privacy.html           # Extension privacy policy
+│       └── terms.html             # Extension terms of service
+├── store-assets/                  # Chrome Web Store submission kit
+│   ├── web_store_assets.md        # Store listing copy, justifications & disclosures
+│   ├── promo_tile_small.png       # 440x280 small promo tile
+│   └── screenshots/               # 1280x800 verified store screenshots (1 to 5)
+├── scripts/
+│   ├── package-extension.cjs      # Packaging pipeline for dist archive
+│   └── generate-store-assets.cjs  # Store screenshot generator
+├── tests/                         # Node.js automated test suites (55 tests)
+├── dist/                          # Production distribution archives (.gitignore)
+├── package.json                   # Project metadata & npm scripts
+└── README.md                      # Project documentation (this file)
 ```
 
 ---
 
 ## 🚀 Setup & Installation
 
-### 1. Load Chrome Extension
+### Option A: Install from Production Package
 
-1. Open Google Chrome.
-2. Navigate to `chrome://extensions/`.
-3. Toggle the **Developer mode** switch in the top-right corner.
-4. Click on **Load unpacked** in the top-left.
-5. Select the **`extension/`** directory in this project folder.
-6. The extension icon will appear in your toolbar. Click it to open the side panel!
+1. Download or generate the production bundle:
+   ```bash
+   npm run package
+   ```
+2. Unzip `dist/vrh-ai-browser-v2.0.0.zip` into a local directory.
+3. Open Google Chrome and navigate to `chrome://extensions/`.
+4. Enable **Developer mode** in the top-right corner.
+5. Click **Load unpacked** and select the unzipped directory (or the repository's `extension/` directory).
+6. Click the extension icon in your Chrome toolbar to launch the Side Panel!
+
+### Option B: Developer Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/try2booyah-maker/vrh-ai-browser.git
+cd vrh-ai-browser
+
+# Install devDependencies (for tests & packaging)
+npm install
+
+# Run automated verification test suite
+npm test
+
+# Build production zip archive
+npm run package
+```
 
 ---
 
-### 2. Extension Options & Model Pool Setup
+## ⚙️ Model Provider Configuration
 
-1. Open the extension side panel.
-2. Click the ⚙️ (Settings) icon.
-3. In the **Providers** tab, paste your **OpenRouter API Key**.
-4. In the **Model Access Pool**, click **Add model** to search and select models from OpenRouter's catalog (both free and paid models are available).
-5. Choose your default theme (Dark, Light, or System) and click save where needed.
-
-> **Note**: VRH.AI connects directly to OpenRouter. No backend server is required. All API calls are made client-side from the extension using your configured API key.
+1. Open the Side Panel and click the ⚙️ (**Settings**) icon in the top header.
+2. Under **Model Providers**, choose your preferred provider:
+   - **Groq**: Ultra-fast low latency inference (Llama 3.3 70B, etc.)
+   - **OpenRouter**: Access hundreds of models with flexible routing
+   - **Anthropic**: Claude 3.5 Sonnet & Claude 3.5 Haiku
+   - **OpenAI**: GPT-4o, GPT-4o-mini
+   - **Google Gemini**: Gemini 1.5 Pro, Gemini 1.5 Flash
+   - **Ollama**: Local, completely private offline models
+3. Enter your API key and click **Test Connection** to check real-time latency.
+4. Set your default model and start chatting!
 
 ---
 
-## 🧪 E2E Puppeteer Testing
+## 🧪 Automated Testing Suite
 
-We use Puppeteer to load the extension automatically and verify page rendering.
+VRH.AI includes a comprehensive, 55-test suite covering:
+- **Agent Lifecycle & Sensitive Action Gating**: Hardware-level interception of payment/checkout forms.
+- **VRH.AI System Persona Contract**: Ensuring models respond accurately as VRH.AI without leaking base provider defaults.
+- **DOMPurify Sanitization**: Zero XSS tolerance across rendered markdown and live DOM data.
+- **Exponential Backoff & Retries**: Robust HTTP 429/503 network resilience.
+- **Multimodal & Multi-Tab Routing**: Proportional context budgeting across open tabs.
+- **Vendored PDF & OCR Pipelines**: Text and image-based document extraction.
 
-1. Ensure Node.js is installed.
-2. Install Puppeteer:
-   ```bash
-   npm install puppeteer
-   ```
-3. Run E2E tests:
-   ```bash
-   node tests/test_extension.js
-   ```
-4. Check the `tests/` directory for generated test screenshots.
+Run all tests:
+```bash
+npm test
+```
+
+---
+
+## 📦 Publishing to Chrome Web Store
+
+Everything needed for the Chrome Web Store Developer Console is packaged and documented:
+1. Run `npm run package` to create `dist/vrh-ai-browser-v2.0.0.zip`.
+2. Follow the step-by-step checklist in [`store-assets/web_store_assets.md`](store-assets/web_store_assets.md) for copy-paste descriptions, permission justifications, and store screenshots.
 
 ---
 
 ## 📄 License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE).

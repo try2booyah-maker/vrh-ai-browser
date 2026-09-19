@@ -200,7 +200,10 @@
         <!-- Header -->
         <header class="top-bar glass">
           <div class="left-actions">
-            <div id="themeToggle" class="theme-toggle-btn">VRH.AI</div>
+            <div id="themeToggle" class="theme-toggle-btn">
+              <img src="../assets/icons/icon32.png" alt="VRH.AI Logo" class="header-logo-icon">
+              <span>VRH.AI</span>
+            </div>
           </div>
           <div class="right-actions">
             <button class="icon-btn" id="newChatBtn" title="New Chat">
@@ -232,14 +235,13 @@
         <div class="view-panel active" id="view-chat">
           <main class="chat-area" id="chatArea">
             <!-- Simulated Message Turn: User asks for full capabilities -->
-            <div class="msg-group user">
-              <div class="chat-msg user-msg">What are your full capabilities and what can you do?</div>
+            <div class="msg msg-user">
+              What are your full capabilities and what can you do?
             </div>
 
             <!-- Simulated Assistant Response: VRH.AI Platform Superpowers -->
-            <div class="msg-group assistant">
-              <div class="chat-msg assistant-msg">
-                <p>Hello! I am <strong>VRH.AI</strong>, your intelligent autonomous browser copilot and virtual assistant running directly inside Google Chrome.</p>
+            <div class="msg msg-assistant">
+              <p>Hello! I am <strong>VRH.AI</strong>, your intelligent autonomous browser copilot and virtual assistant running directly inside Google Chrome.</p>
                 <p>Here are my <strong>9 core platform superpowers</strong>:</p>
 
                 <h3>1. 🌐 Live Web Page Copilot (Ask Mode)</h3>
@@ -289,7 +291,6 @@
                 <ul>
                   <li>Connect to 6+ providers (OpenRouter, Groq, OpenAI, Anthropic, Gemini, or 100% offline local Ollama). All keys and chats stay strictly in your browser storage.</li>
                 </ul>
-              </div>
             </div>
           </main>
 

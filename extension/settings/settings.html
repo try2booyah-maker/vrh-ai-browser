@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,9 +13,12 @@
 <body>
   <div class="settings-layout">
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <span class="sidebar-logo">VRH.AI</span>
-        <span class="sidebar-subtitle">Dashboard</span>
+      <div class="sidebar-header" style="display: flex; align-items: center; gap: 10px;">
+        <img src="../assets/icons/icon32.png" alt="VRH.AI Logo" style="width: 24px; height: 24px; border-radius: 6px; box-shadow: 0 1px 3px rgba(44, 38, 30, 0.08);">
+        <div>
+          <span class="sidebar-logo">VRH.AI</span>
+          <span class="sidebar-subtitle">Dashboard</span>
+        </div>
       </div>
       <nav>
         <button class="nav-item active" data-section="providers">
@@ -305,9 +308,10 @@
         </div>
 
         <div class="card">
-          <div class="card-body about-card">
+          <div class="card-body about-card" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <img src="../assets/icons/icon128.png" alt="VRH.AI Emblem" style="width: 56px; height: 56px; border-radius: 14px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(44, 38, 30, 0.08);">
             <div class="about-logo">VRH.AI</div>
-            <div class="about-version">Version 1.0.1</div>
+            <div class="about-version">Version 2.0.0</div>
             <p class="about-desc">An autonomous, open-source browser copilot that helps users summarize texts, write fluently, translate, and interact directly with browser tabs using local actions.</p>
             <div class="divider"></div>
             <div class="about-links">

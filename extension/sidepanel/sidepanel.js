@@ -437,6 +437,9 @@ const initSidepanelApp = async () => {
     const ws = document.createElement('div');
     ws.className = 'welcome-screen'; ws.id = 'welcomeScreen';
     ws.innerHTML = `
+      <div class="welcome-emblem">
+        <img src="../assets/icons/icon128.png" alt="VRH.AI Emblem" class="welcome-logo-icon">
+      </div>
       <div class="welcome-logo">VRH.AI</div>
       <div class="welcome-subtitle">Your intelligent browser copilot.<br>Ask questions, automate tasks, control the web.</div>
       <div class="welcome-prompts">

@@ -1,59 +1,59 @@
-:root, [data-theme="dark"] {
-  color-scheme: dark;
-  --bg-color: #0b0f19;
-  --sidebar-bg: #0f172a;
-  --card-bg: rgba(30, 41, 59, 0.6);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --text-color: #f1f5f9;
-  --text-muted: #94a3b8;
-  --nav-active-bg: rgba(132, 204, 22, 0.15);
-  --nav-active-color: #bef264;
-  --primary-color: #84cc16; /* lime-500 */
-  --primary-hover: #a3e635; /* lime-400 */
-  --btn-hover: rgba(255, 255, 255, 0.05);
-  --input-bg: rgba(15, 23, 42, 0.6);
-  --accent-hover: rgba(132, 204, 22, 0.2);
-  --danger-color: #ef4444;
-  --danger-hover: #f87171;
-}
-
-[data-theme="light"] {
+:root, [data-theme="light"] {
   color-scheme: light;
-  --bg-color: #f8fafc;
+  --bg-color: #fbf9f5;
   --sidebar-bg: #ffffff;
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --border-color: rgba(0, 0, 0, 0.08);
-  --text-color: #0f172a;
-  --text-muted: #64748b;
-  --nav-active-bg: rgba(132, 204, 22, 0.12);
-  --nav-active-color: #4d7c0f; /* lime-700 */
-  --primary-color: #65a30d; /* lime-600 */
-  --primary-hover: #4d7c0f; /* lime-700 */
-  --btn-hover: rgba(0, 0, 0, 0.03);
+  --card-bg: #ffffff;
+  --border-color: rgba(44, 38, 30, 0.08);
+  --text-color: #1c1917;
+  --text-muted: #78716c;
+  --nav-active-bg: rgba(44, 38, 30, 0.06);
+  --nav-active-color: #1c1917;
+  --primary-color: #1c1917;
+  --primary-hover: #292524;
+  --btn-hover: rgba(44, 38, 30, 0.04);
   --input-bg: #ffffff;
-  --accent-hover: rgba(132, 204, 22, 0.1);
+  --accent-hover: rgba(44, 38, 30, 0.06);
   --danger-color: #dc2626;
   --danger-hover: #b91c1c;
 }
 
-@media (prefers-color-scheme: light) {
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-color: #0c0d10;
+  --sidebar-bg: #18181b;
+  --card-bg: #18181b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-color: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --nav-active-bg: rgba(255, 255, 255, 0.08);
+  --nav-active-color: #f4f4f5;
+  --primary-color: #f4f4f5;
+  --primary-hover: #e4e4e7;
+  --btn-hover: rgba(255, 255, 255, 0.05);
+  --input-bg: #18181b;
+  --accent-hover: rgba(255, 255, 255, 0.1);
+  --danger-color: #ef4444;
+  --danger-hover: #f87171;
+}
+
+@media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
-    color-scheme: light;
-    --bg-color: #f8fafc;
-    --sidebar-bg: #ffffff;
-    --card-bg: rgba(255, 255, 255, 0.85);
-    --border-color: rgba(0, 0, 0, 0.08);
-    --text-color: #0f172a;
-    --text-muted: #64748b;
-    --nav-active-bg: rgba(132, 204, 22, 0.12);
-    --nav-active-color: #4d7c0f;
-    --primary-color: #65a30d;
-    --primary-hover: #4d7c0f;
-    --btn-hover: rgba(0, 0, 0, 0.03);
-    --input-bg: #ffffff;
-    --accent-hover: rgba(132, 204, 22, 0.1);
-    --danger-color: #dc2626;
-    --danger-hover: #b91c1c;
+    color-scheme: dark;
+    --bg-color: #0c0d10;
+    --sidebar-bg: #18181b;
+    --card-bg: #18181b;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: #f4f4f5;
+    --text-muted: #a1a1aa;
+    --nav-active-bg: rgba(255, 255, 255, 0.08);
+    --nav-active-color: #f4f4f5;
+    --primary-color: #f4f4f5;
+    --primary-hover: #e4e4e7;
+    --btn-hover: rgba(255, 255, 255, 0.05);
+    --input-bg: #18181b;
+    --accent-hover: rgba(255, 255, 255, 0.1);
+    --danger-color: #ef4444;
+    --danger-hover: #f87171;
   }
 }
 
@@ -100,10 +100,7 @@ body {
 .sidebar-logo {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #84cc16, #10b981);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-color);
   letter-spacing: -0.5px;
 }
 
@@ -163,7 +160,7 @@ body {
   flex: 1;
   padding: 48px;
   overflow-y: auto;
-  background-image: radial-gradient(circle at 100% 0%, rgba(132, 204, 22, 0.02) 0%, transparent 60%);
+  background-color: var(--bg-color);
 }
 
 .settings-section {
@@ -274,7 +271,7 @@ input[type="text"]:focus,
 .custom-select:focus,
 .custom-textarea:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.15);
+  box-shadow: 0 0 0 3px rgba(44, 38, 30, 0.12);
 }
 
 .custom-textarea {
@@ -675,10 +672,7 @@ input[type="text"]:focus,
 .about-logo {
   font-size: 2.2rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #84cc16, #10b981);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-color);
   margin-bottom: 4px;
   letter-spacing: -0.5px;
 }
@@ -819,7 +813,7 @@ input[type="text"]:focus,
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: rgba(132, 204, 22, 0.05);
+  background: var(--btn-hover);
   border: 1px dashed var(--border-color);
   border-radius: 8px;
   color: var(--text-muted);

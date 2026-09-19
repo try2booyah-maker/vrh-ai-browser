@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body {
-      background: var(--bg-primary);
+      background: var(--bg-color, #fbf9f5);
       margin: 0;
       padding: 0;
       display: flex;
@@ -26,17 +26,17 @@
     .sidepanel-frame {
       width: 420px;
       height: 820px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--card-border);
       border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+      box-shadow: 0 16px 40px rgba(44, 38, 30, 0.08);
       overflow: hidden;
       position: relative;
-      background: var(--bg-primary);
+      background: var(--bg-color, #fbf9f5);
     }
     .preview-demo-pane {
       flex: 1;
       background: var(--card-bg);
-      border: 1px solid var(--border);
+      border: 1px solid var(--card-border);
       border-radius: 18px;
       padding: 28px;
       display: flex;
@@ -44,18 +44,18 @@
       gap: 20px;
     }
     .demo-header {
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--card-border);
       padding-bottom: 16px;
     }
     .demo-title {
       margin: 0 0 6px 0;
       font-size: 1.3rem;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--text-color);
     }
     .demo-desc {
       margin: 0;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       font-size: 0.85rem;
     }
     .test-controls {
@@ -66,36 +66,36 @@
     .test-btn {
       padding: 8px 14px;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--input-bg);
-      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-color);
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
     }
     .test-btn:hover {
-      border-color: var(--accent);
-      background: var(--accent-subtle);
-      color: var(--accent);
+      border-color: var(--tab-active);
+      background: var(--accent-hover);
+      color: var(--text-color);
     }
     .selection-test-box {
-      border: 1px dashed var(--border);
+      border: 1px dashed var(--card-border);
       border-radius: 12px;
       padding: 16px;
-      background: var(--bg-primary);
+      background: var(--card-bg);
       position: relative;
     }
     .selection-test-title {
       font-size: 0.8rem;
       font-weight: 700;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 8px;
     }
     .selection-test-text {
-      color: var(--text-primary);
+      color: var(--text-color);
       font-size: 0.9rem;
       line-height: 1.6;
       margin: 0;
@@ -130,8 +130,8 @@
       transition: background 0.15s;
     }
     .vrh-sel-btn:hover {
-      background: rgba(132, 204, 22, 0.25);
-      color: #d9f99d;
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
     }
   </style>
 

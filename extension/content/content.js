@@ -772,7 +772,7 @@ document.addEventListener('mouseup', () => {
                 color: #e2e8f0; font-size: 12px; font-weight: 500;
                 border-radius: 6px; cursor: pointer; white-space: nowrap; font-family: inherit;
               }
-              .vrh-sel-btn:hover { background: rgba(132, 204, 22, 0.2); color: #d9f99d; }
+              .vrh-sel-btn:hover { background: rgba(255, 255, 255, 0.16); color: #ffffff; }
               @keyframes vrhFadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
             `;
             document.head.appendChild(style);

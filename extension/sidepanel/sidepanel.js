@@ -1,5 +1,5 @@
 /**
- * VRH.AI Platform Persona & System Prompt Builder
+ * VRH.AI Platform Personal & System Prompt Builder
  * Generates an authoritative platform identity, anti-leakage directives,
  * full 9-capability specification, and current browser context.
  */
@@ -237,17 +237,17 @@ const initSidepanelApp = async () => {
   // ══════════════════════════════════════════════════
   // THEME MANAGEMENT
   // ══════════════════════════════════════════════════
-  const themes = ['dark', 'light', 'system'];
-  const themeIcons = { dark: '🌙', light: '☀️', system: '💻' };
+  const themes = ['light', 'dark', 'system'];
+  const themeIcons = { light: '☀️', dark: '🌙', system: '💻' };
 
   chrome.storage.local.get(['uiTheme'], (res) => {
-    const saved = res.uiTheme || 'dark';
+    const saved = res.uiTheme || 'light';
     document.documentElement.setAttribute('data-theme', saved);
   });
 
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
-      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
       const next = themes[(themes.indexOf(cur) + 1) % themes.length];
       themeToggle.style.transform = 'scale(0.85) rotate(-3deg)';
       setTimeout(() => { themeToggle.style.transform = 'scale(1)'; }, 250);
@@ -1301,7 +1301,7 @@ const initSidepanelApp = async () => {
     if (!bar) {
       bar = document.createElement('div');
       bar.id = 'vrh-pdf-progress-bar';
-      bar.style.cssText = 'position:fixed;bottom:75px;left:16px;right:16px;background:rgba(30,41,59,0.95);border:1px solid rgba(132,204,22,0.4);border-radius:8px;padding:8px 12px;font-size:12px;color:#d9f99d;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);transition:opacity 0.2s;';
+      bar.style.cssText = 'position:fixed;bottom:75px;left:16px;right:16px;background:var(--card-bg, #ffffff);border:1px solid var(--card-border, rgba(44,38,30,0.12));border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-color, #1c1917);z-index:99999;box-shadow:var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1));display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);transition:opacity 0.2s;';
       document.body.appendChild(bar);
     }
     if (!msg) {
@@ -1309,7 +1309,7 @@ const initSidepanelApp = async () => {
       return;
     }
     bar.style.display = 'flex';
-    bar.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid #84cc16;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span><span>${escapeHtml(msg)}</span>`;
+    bar.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid var(--text-color, #1c1917);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span><span>${escapeHtml(msg)}</span>`;
   }
 
   async function runTesseractOCR(canvas, onProgress) {
